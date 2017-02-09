@@ -2,6 +2,8 @@
 #include "MAX44009.h"
 #include "OneWireTemp.h"
 #include "Wire.h"
+#include "BufferedMeteoData.h"
+#include "TimerOnChannel.h"
 
 #define P0 1013.25
 
@@ -17,26 +19,23 @@
 #define PIN_SPARE_1 14
 #define PIN_SPARE_2 15
 
-#define BUFFER_SIZE 100
-
-
-BMP280 temperaturePresure;
+BMP280 temperaturePressure;
 MAX44009 light;
 OneWireTemp temperature(PIN_ONE_WIRE);
+BufferedMeteoData data;
 
-double temperatureBuffer[BUFFER_SIZE];
-double pressureBuffer[BUFFER_SIZE];
-double illuminence[BUFFER_SIZE];
+TimerOnChannel channel1(PIN_RELAY_1, "Fan");
+TimerOnChannel channel2(PIN_RELAY_2, "Fan2");
+
 
 void setup()
 {
   pinMode(PIN_LED, OUTPUT);
   Serial.begin(115200);
-  
+
   light.begin(PIN_SDA, PIN_SCL);
-  
-  temperaturePresure.begin(PIN_SDA, PIN_SCL);
-  temperaturePresure.setOversampling(4);
+  temperaturePressure.begin(PIN_SDA, PIN_SCL);
+  temperaturePressure.setOversampling(4);
 }
 
 void loop()
@@ -44,26 +43,27 @@ void loop()
   blinkStatusLED(50,50);
   
   double T,P;
-  char result = temperaturePresure.startMeasurment();
+  char result = temperaturePressure.startMeasurment();
   if(result!=0){
     delay(result);
-    result = temperaturePresure.getTemperatureAndPressure(T,P);
+    result = temperaturePressure.getTemperatureAndPressure(T,P);
       if(result!=0)
       {
-        Serial.print("[bmp280]Temperature = ");Serial.print(T,2); Serial.print(" degC\t\n");
-        Serial.print("[bmp280]Pressure = ");Serial.print(P,2); Serial.print(" mBar\t\n");
-        Serial.print("[bmp280]Altitude = ");Serial.print(temperaturePresure.altitude(P,P0),2); Serial.println(" m\n");
+        data.updateTemp(T);
+        data.updatePressure(P);
+        Serial.print("[bmp280]Altitude = ");Serial.print(temperaturePressure.altitude(P, P0), 2); Serial.println(" m\n");
       }
   }
   
-  blinkStatusLED(50,50);
+  blinkStatusLED(50,50);  
   float lux = light.get_lux();
-  Serial.print("[max440]Illuminance = ");Serial.print(lux,2); Serial.print(" lux\n");
-
-  blinkStatusLED(100, 100);
+  data.updateIlluminance(lux);
   
+  blinkStatusLED(50, 50);
   temperature.getTemperatures();
-  blinkStatusLED(100, 100);  
+  
+  blinkStatusLED(100, 200);  
+  data.printBuffersStatus();
 }
 
 

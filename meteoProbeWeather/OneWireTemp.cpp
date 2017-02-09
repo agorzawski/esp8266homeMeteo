@@ -24,10 +24,16 @@ double *OneWireTemp::getTemperatures()
   double tempArray[_sensorsNb];
   for (int i=0; i <_sensorsNb; i++)
   {
-      Serial.printf("[OneWire]Temperature [%d] is: ",i+1);
       double temp = _sensors.getTempCByIndex(i);
+      if (temp <= -127.0)
+      {
+        Serial.printf("[OneWire]Temperature [%d] is disconnected.\n",i+1);
+        continue;
+      }
+      Serial.printf("[OneWire]Temperature [%d] is: ",i+1);
       tempArray[i] = temp;
-      Serial.println(temp);
+      Serial.print(temp);
+      Serial.print(" degC\n");
   }
  
   return tempArray;

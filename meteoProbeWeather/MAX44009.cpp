@@ -16,7 +16,7 @@ float MAX44009::get_lux(void)
   int luxLow = max44009_read_reg(MAX44009_LUX_LO);
   int exponent = (luxHigh & 0xf0) >> 4;
   int mant = (luxHigh & 0x0f) << 4 | luxLow;  
-  return (float)(((0x00000001 << exponent) * (float) mant) * 0.045);
+  return (float)(((0x00000001 << exponent) * (float) mant) * 0.045f);
 }
 
 void MAX44009::max44009_write_reg( uint8_t reg, uint8_t val)

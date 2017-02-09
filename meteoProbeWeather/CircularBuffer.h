@@ -1,6 +1,9 @@
+/**
+ * 2017 bartosz bielawski, arek gorzawski
+ */
 #include <cstdlib>
 
-template <int N>
+template <typename T, int N>
 class CircularBuffer
 {
   public:
@@ -30,7 +33,7 @@ class CircularBuffer
       _used -= size;
     }
    
-    void read(float* data, size_t size)
+    void read(T* data, size_t size)
     {        
       for (size_t i = 0; i < size; i++)
       {
@@ -42,9 +45,9 @@ class CircularBuffer
       _used -= size;
     }
  
-    float read()
+    T read()
     {
-      float r = _buffer[_readIndex];
+      T r = _buffer[_readIndex];
       _readIndex += 1;
       _readIndex %= N;
       _used -= 1;
@@ -55,7 +58,7 @@ class CircularBuffer
     const size_t& getUsed() const {return _used;};
  
   private:
-    float _buffer[N];
+    T _buffer[N];
     size_t  _writeIndex;
     size_t  _readIndex;
     size_t  _used;

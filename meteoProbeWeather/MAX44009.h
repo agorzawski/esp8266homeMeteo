@@ -1,3 +1,7 @@
+/**
+ * 2017 arek gorzawski
+ */
+
 #include "Arduino.h"
 
 #define MAX44009_I2C_ADDR 0x4a

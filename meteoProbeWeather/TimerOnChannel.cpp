@@ -1,3 +1,7 @@
+/**
+ * 2016 arek gorzawski
+ */
+
 #include "Arduino.h"
 #include "TimerOnChannel.h"
 

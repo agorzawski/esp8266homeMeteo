@@ -1,27 +1,39 @@
+/**
+ * 2017 arek gorzawski
+ */
+ 
 #include "BufferedMeteoData.h"
 #include <Arduino.h>
 
 void BufferedMeteoData::printBuffersStatus()
 {
-  Serial.printf("[buffers] Pressure %d / %d , Temperature %d / %d, Illuminance %d / %d \n",_pressure.getUsed(), BUFFER_SIZE, _temperature.getUsed(), BUFFER_SIZE, _illuminance.getUsed(), BUFFER_SIZE);
+  //Serial.printf("[buffers] Pressure %d / %d , Temperature %d / %d, Illuminance %d / %d \n",_pressure.getUsed(), BUFFER_SIZE, _temperature.getUsed(), BUFFER_SIZE, _illuminance.getUsed(), BUFFER_SIZE);
+  logPrintf("[buffers] Pressure %d / %d , Temperature %d / %d, Illuminance %d / %d \n", _pressure.getUsed(), BUFFER_SIZE, _temperature.getUsed(), BUFFER_SIZE, _illuminance.getUsed(), BUFFER_SIZE);
+
 }
 
 void BufferedMeteoData::updateTemp(float newTemp)
 {
   Serial.print("[bmp280]Temperature = ");Serial.print(newTemp,2); Serial.print(" degC\t\n");
-  _temperature.write( &newTemp, 1);
+  //logPrintf("[bmp280]Temperature = %4.2f  degC", newTemp);
+  
+  _temperature.write(&newTemp, 1);
 }
 
 void BufferedMeteoData::updatePressure(float newPressure)
 {
   Serial.print("[bmp280]Pressure = ");Serial.print(newPressure,2); Serial.print(" mBar\t\n");
-  _pressure.write( &newPressure, 1);
+  //logPrintf("[bmp280]Pressure = %4.2f  mBar", newPressure);
+  
+  _pressure.write(&newPressure, 1);
 }
 
 void BufferedMeteoData::updateIlluminance(float newValue)
 {
-   Serial.print("[max440]Illuminance = ");Serial.print(newValue,2); Serial.print(" lux\n");
-  _illuminance.write( &newValue, 1);
+  Serial.print("[max440]Illuminance = ");Serial.print(newValue,2); Serial.print(" lux\n"); 
+  //logPrintf("[max440]Illuminance = %4.2f  lux", newValue);
+  
+  _illuminance.write(&newValue, 1);
 }
 
 float* BufferedMeteoData::getIlluminance()

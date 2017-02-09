@@ -1,3 +1,7 @@
+/**
+ * 2016 arek gorzawski
+ */
+
 #ifndef TimerOnChannel_h
 #define TimerOnChannel_h
 #include "Arduino.h"

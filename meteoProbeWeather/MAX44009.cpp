@@ -1,3 +1,6 @@
+/**
+ * 2017 arek gorzawski 
+ */
 #include "MAX44009.h"
 
 MAX44009::MAX44009()

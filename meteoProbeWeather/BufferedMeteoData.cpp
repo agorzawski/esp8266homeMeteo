@@ -5,6 +5,25 @@
 #include "BufferedMeteoData.h"
 #include <Arduino.h>
 
+
+uint32_t BufferedMeteoData::getId(){
+  CircularBuffer<float, BUFFER_SIZE> _dataBuffer;
+  //_data.push_back(_dataBuffer);
+  return _id++;
+}
+
+void BufferedMeteoData::update(float value, uint32_t id){
+  _data[id].write(&value, 1);
+}
+
+float* BufferedMeteoData::get(uint32_t id)
+{
+  float* toReturn;
+  _data[id].read(toReturn, _data[id].getUsed());
+  _data[id].reset();
+  return toReturn;
+}
+
 void BufferedMeteoData::printBuffersStatus()
 {
   //Serial.printf("[buffers] Pressure %d / %d , Temperature %d / %d, Illuminance %d / %d \n",_pressure.getUsed(), BUFFER_SIZE, _temperature.getUsed(), BUFFER_SIZE, _illuminance.getUsed(), BUFFER_SIZE);

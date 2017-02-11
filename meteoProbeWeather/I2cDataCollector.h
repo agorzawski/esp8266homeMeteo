@@ -18,16 +18,18 @@ class I2cDataCollector
     void registerBuffersData(BufferedMeteoData& data)
     {
       _data = &data;
+      _bufferIdTemp = _data->getId();
+      _bufferIdPressure = _data->getId();
     }
 
     void collect()
     {
         double T,P;
         char result = _temperaturePressure.startMeasurment();
-        if(result!=0){
+        if(result != 0){
           delay(result);
           result = _temperaturePressure.getTemperatureAndPressure(T,P);
-            if(result!=0)
+            if(result != 0)
             {
               if (_data != NULL)
               {
@@ -47,6 +49,8 @@ class I2cDataCollector
 
     private:
       BufferedMeteoData* _data = NULL;
+      uint32_t  _bufferIdTemp;
+      uint32_t  _bufferIdPressure;
       BMP280 _temperaturePressure;
       MAX44009 _light;
 };

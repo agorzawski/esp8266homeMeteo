@@ -11,53 +11,64 @@
 
 #define P0 1013.25
 
-#define PIN_SCL 12
-#define PIN_SDA 13
+#define PIN_SCL 12  // D6
+#define PIN_SDA 13  // D7
 
-#define PIN_LED 2
-#define PIN_ONE_WIRE 0
+#define PIN_LED 2  // D4
+#define PIN_ONE_WIRE 0 //  D3
 
-#define PIN_RELAY_1 4
-#define PIN_RELAY_2 5
+#define PIN_RELAY_1 4  // D2
+#define PIN_RELAY_2 5  // D1
 
-#define PIN_SPARE_1 14
-#define PIN_SPARE_2 15
+#define PIN_SPARE_1 16 // D0
+#define PIN_SPARE_2 14 // D5
+//#define PIN_SPARE_3 12 // D6
 
-I2cDataCollector dataCollector(PIN_SDA, PIN_SCL);
-OneWireDataCollector temperature(PIN_ONE_WIRE);
+//#define PIN_SCL 15 -> D8
+
+
+I2cDataCollector tempPressureCollector(PIN_SDA, PIN_SCL);
+OneWireDataCollector tempCollector(PIN_ONE_WIRE);
 
 BufferedMeteoData data;
 
 TimerOnChannel channel1(PIN_RELAY_1, "Fan");
 TimerOnChannel channel2(PIN_RELAY_2, "Fan2");
+//TimerOnChannel channel3(PIN_SPARE_1, "Fan");
+//TimerOnChannel channel4(PIN_SPARE_2, "Fan2");
 
 void setup()
 {
   pinMode(PIN_LED, OUTPUT);
+  
   Serial.begin(115200);
-  dataCollector.registerBuffersData(data);
-  temperature.registerBuffersData(data);
+  tempPressureCollector.registerBuffersData(data);
+  tempCollector.registerBuffersData(data);
 
 }
 
 void loop()
 {
-  blinkStatusLED(50,50);
+  blinkStatus(PIN_LED, 50,50);
+  blinkStatus(PIN_RELAY_1, 250, 50);
+  blinkStatus(PIN_RELAY_2, 250, 50);
+ // blinkStatus(PIN_SPARE_1, 250, 50);
+ // blinkStatus(PIN_SPARE_2, 250, 50);
   
-  dataCollector.collect();
-  blinkStatusLED(50, 50);
-  temperature.collect();
+  tempPressureCollector.collect();
+  tempCollector.collect();
   
-  blinkStatusLED(100, 200);  
+  blinkStatus(PIN_LED, 50, 400);  
   data.printBuffersStatus();
+
 }
 
 
-void blinkStatusLED(int high, int low) 
+void blinkStatus(int ledId, int high, int low) 
 {
-  digitalWrite(PIN_LED, HIGH);
+  digitalWrite(ledId, HIGH);
   delay(high);
-  digitalWrite(PIN_LED, LOW);
+  digitalWrite(ledId, LOW);
   delay(low);
 }
 

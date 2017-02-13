@@ -23,7 +23,7 @@ class CircularBuffer
  
       _writeIndex += size;
       _writeIndex %= N;
-      _used += size;
+      _used += size; // todo poprawic inkrementacjie 
     }
  
     void discard(size_t size)

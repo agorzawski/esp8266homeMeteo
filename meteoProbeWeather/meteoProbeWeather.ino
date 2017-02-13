@@ -3,9 +3,7 @@
  */
 
 #include "BufferedMeteoData.h"
-
 #include "TimerOnChannel.h"
-
 #include "I2cDataCollector.h"
 #include "OneWireDataCollector.h"
 
@@ -24,8 +22,7 @@
 #define PIN_SPARE_2 14 // D5
 //#define PIN_SPARE_3 12 // D6
 
-//#define PIN_SCL 15 -> D8
-
+//#define PIN_SCL 15 -> D8 -> not connected in board v1
 
 I2cDataCollector tempPressureCollector(PIN_SDA, PIN_SCL);
 OneWireDataCollector tempCollector(PIN_ONE_WIRE);
@@ -34,33 +31,28 @@ BufferedMeteoData data;
 
 TimerOnChannel channel1(PIN_RELAY_1, "Fan");
 TimerOnChannel channel2(PIN_RELAY_2, "Fan2");
-//TimerOnChannel channel3(PIN_SPARE_1, "Fan");
-//TimerOnChannel channel4(PIN_SPARE_2, "Fan2");
 
 void setup()
 {
   pinMode(PIN_LED, OUTPUT);
-  
   Serial.begin(115200);
   tempPressureCollector.registerBuffersData(data);
   tempCollector.registerBuffersData(data);
-
 }
 
 void loop()
 {
   blinkStatus(PIN_LED, 50,50);
-  blinkStatus(PIN_RELAY_1, 250, 50);
-  blinkStatus(PIN_RELAY_2, 250, 50);
- // blinkStatus(PIN_SPARE_1, 250, 50);
- // blinkStatus(PIN_SPARE_2, 250, 50);
+  blinkStatus(PIN_LED, 50,50);
   
+  blinkStatus(PIN_RELAY_1, 250, 50);
   tempPressureCollector.collect();
+
+  blinkStatus(PIN_RELAY_2, 250, 50);
   tempCollector.collect();
   
-  blinkStatus(PIN_LED, 50, 400);  
+  blinkStatus(PIN_LED, 50, 50);  
   data.printBuffersStatus();
-
 }
 
 

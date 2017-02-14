@@ -26,6 +26,14 @@ static char dateTimeBuffer[20] = "[Initializing.....]";
 
 static time_t previousDateTime = 0;
 
+void blinkStatus(int ledId, int high, int low) 
+{
+  digitalWrite(ledId, HIGH);
+  delay(high);
+  digitalWrite(ledId, LOW);
+  delay(low);
+}
+
 const char* getDateTime()
 {
   time_t now = time(nullptr);

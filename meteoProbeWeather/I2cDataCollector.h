@@ -5,7 +5,10 @@
 #include "MAX44009.h"
 #include "Wire.h"
 
-class I2cDataCollector
+#include "task.hpp"
+using namespace Tasks;
+
+class I2cDataCollector : public Task
 {
   public: 
     I2cDataCollector(int pin_sda, int pin_scl)
@@ -15,6 +18,12 @@ class I2cDataCollector
         _temperaturePressure.setOversampling(4);     
     }
 
+    I2cDataCollector(int pin_sda, int pin_scl, BufferedMeteoData& data)
+    {
+      I2cDataCollector(pin_sda, pin_scl);
+      registerBuffersData(data);
+    }
+    
     void registerBuffersData(BufferedMeteoData& data)
     {
         _data = &data;
@@ -23,7 +32,7 @@ class I2cDataCollector
         _bufferIdLux = _data -> getId("lux [max44009]");    
     }
 
-    void collect()
+    virtual void run()
     {
         double T,P;
         char result = _temperaturePressure.startMeasurment();
@@ -38,8 +47,7 @@ class I2cDataCollector
                       _data -> updateData(_bufferIdTemp, T);
                       _data -> updateData(_bufferIdPressure, P);
                     }
-                    //Serial.print("[bmp280]Altitude = ");Serial.print(_temperaturePressure.altitude(P, P0), 2); Serial.println(" m\n");
-                }
+               }
         }
         
         float lux = _light.get_lux();

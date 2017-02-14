@@ -3,10 +3,11 @@
  */
 #include <OneWire.h>
 #include <DallasTemperature.h>
-
+#include "task.hpp"
 #define SENSORS_NB 2
 
-class OneWireDataCollector
+using namespace Tasks;
+class OneWireDataCollector : public Task
 {
  public:
       OneWireDataCollector(int bus)
@@ -14,6 +15,15 @@ class OneWireDataCollector
          OneWire oneWire(bus);
          _sensors = DallasTemperature(&oneWire);
          _sensors.begin(); 
+      }
+
+      OneWireDataCollector(int bus, BufferedMeteoData& data)
+      {
+         //FIXME if calling the other constructor gets the 'bus shadows a parameter'
+         OneWire oneWire(bus);
+         _sensors = DallasTemperature(&oneWire);
+         _sensors.begin(); 
+        registerBuffersData(data);
       }
     
       void registerBuffersData(BufferedMeteoData& data)
@@ -25,7 +35,7 @@ class OneWireDataCollector
           }         
       }
       
-      void collect()
+      virtual void run()
       {
          _sensors.requestTemperatures();    
          for (int i = 0; i < SENSORS_NB; i++)

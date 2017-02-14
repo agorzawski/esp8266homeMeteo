@@ -16,6 +16,8 @@ int operator"" _s(unsigned long long int seconds);
 
 const char* getDateTime();
 
+void blinkStatus(int ledId, int high, int low) ;
+
 const char* generateRandomUUID();
 
 class Client;

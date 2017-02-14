@@ -34,27 +34,32 @@ class I2cDataCollector : public Task
 
     virtual void run()
     {
-        double T,P;
-        char result = _temperaturePressure.startMeasurment();
-        if(result != 0)
-        {
-            delay(result);
-            result = _temperaturePressure.getTemperatureAndPressure(T,P);
-                if(result != 0)
-                {
-                    if (_data != NULL)
-                    {
-                      _data -> updateData(_bufferIdTemp, T);
-                      _data -> updateData(_bufferIdPressure, P);
-                    }
-               }
-        }
-        
-        float lux = _light.get_lux();
-        if (_data != NULL)
-        {        
-          _data -> updateData(_bufferIdLux, lux);
-        }
+         if ((millis() - _millisOnLastCheck) > 1000)
+         {       
+              double T,P;
+              char result = _temperaturePressure.startMeasurment();
+              if(result != 0)
+              {
+                  delay(result);
+                  result = _temperaturePressure.getTemperatureAndPressure(T,P);
+                      if(result != 0)
+                      {
+                          if (_data != NULL)
+                          {
+                            _data -> updateData(_bufferIdTemp, T);
+                            delay(10);
+                            _data -> updateData(_bufferIdPressure, P);
+                          }
+                     }
+              }
+              
+              float lux = _light.get_lux();
+              if (_data != NULL)
+              {        
+                _data -> updateData(_bufferIdLux, lux);
+              }
+              _millisOnLastCheck = millis();
+         }     
     }
 
     private:
@@ -64,5 +69,6 @@ class I2cDataCollector : public Task
         uint32_t _bufferIdLux;      
         BMP280 _temperaturePressure;
         MAX44009 _light;
+        long _millisOnLastCheck = 0;
 };
 

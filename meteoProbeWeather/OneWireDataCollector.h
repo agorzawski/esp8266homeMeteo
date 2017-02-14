@@ -37,24 +37,29 @@ class OneWireDataCollector : public Task
       
       virtual void run()
       {
-         _sensors.requestTemperatures();    
-         for (int i = 0; i < SENSORS_NB; i++)
-         {
-              double temp = _sensors.getTempCByIndex(i);
-              if (temp <= -127.0)
-              {
-                Serial.printf("[OneWire] Temperature [%d] is disconnected.\n",i+1);
-                continue;
+         if (millis() - _millisOnLastCheck > 1000)
+         { 
+             _sensors.requestTemperatures();    
+             for (int i = 0; i < SENSORS_NB; i++)
+             {
+                  double temp = _sensors.getTempCByIndex(i);
+                  if (temp <= -127.0)
+                  {
+                    logPrintf("[OneWire] Temperature [%d] is disconnected.\n",i+1);
+                    continue;
+                  }
+                  if (_data != NULL)
+                  {
+                    _data -> updateData(_bufferId[i], temp);
+                  }
               }
-              Serial.printf("[OneWire]Temperature [%d] is: ",i+1);
-              Serial.print(temp);
-              Serial.print(" degC\n");
-              //_data -> updateData(_bufferId[i], temp);
-          }     
+             _millisOnLastCheck = millis();     
+         }
       }
   
 private:
     BufferedMeteoData* _data = NULL;
     uint32_t _bufferId[SENSORS_NB]; 
+    long _millisOnLastCheck = 0;
     DallasTemperature _sensors; 
 };

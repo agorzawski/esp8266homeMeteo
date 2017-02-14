@@ -4,6 +4,7 @@
 
 #include "task.hpp"
 #include "Arduino.h"
+#include "BufferedMeteoData.h"
 
 extern String webMessage;
 
@@ -15,12 +16,12 @@ public:
   virtual void reset();
   virtual ~WebServerTask();
   bool started = false;
-
-//  void registerBuffersData(BufferedMeteoData& data);
+  void registerBuffersData(BufferedMeteoData& data);
 
 private:
   uint64_t cntr = 0;
-//  BufferedMeteoData* _data;
+  BufferedMeteoData* _data = NULL;
+  BufferedMeteoData* getBuffer();
 };
 
 #endif /* WEBSERVERTASK_H_ */

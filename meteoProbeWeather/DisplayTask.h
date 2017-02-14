@@ -5,12 +5,13 @@ class DisplayTask : public Task
 {
   public: 
     
-    DisplayTask(int pin_sda, int pin_scl){
-      
+    DisplayTask(int pin_sda, int pin_scl){   
     }
     
     virtual void run()
     {
+        logPrintf("Will write something on the OLED screen :) ");
+        sleep(1_s);
     }
 
     void printCurrentData()
@@ -19,4 +20,5 @@ class DisplayTask : public Task
     
   private:
     int _count = 1;
+
 };    

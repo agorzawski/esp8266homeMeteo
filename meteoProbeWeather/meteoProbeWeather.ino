@@ -2,7 +2,8 @@
  * 2017 arek gorzawski
  */
 #include "BufferedMeteoData.h"
-
+#include "WifiConnector.h"
+#include "WebServerTask.h"
 #include "TimerOnChannel.h"
 #include "I2cDataCollector.h"
 #include "OneWireDataCollector.h"
@@ -13,10 +14,7 @@
 
 #include <FS.h>
 
-#include "WifiConnector.h"
-#include "WebServerTask.h"
-
-#define P0 1013.25 // default pressure at the see level
+#define P0 1013.25      // default pressure at the see level
 #define PIN_SCL 12      // D6
 #define PIN_SDA 13      // D7
 #define PIN_LED 2       // D4
@@ -59,8 +57,7 @@ class DataBufferStatus: public Task
     virtual void run()
     {
       _data -> printBuffersStatus();
-      sleep(s ? 5_s - 1: 1);
-      s = !s;
+      sleep(2_s);
     }
 
   private:
@@ -70,8 +67,8 @@ class DataBufferStatus: public Task
 
 BufferedMeteoData data;
 
-I2cDataCollector tempPressureCollector(PIN_SDA, PIN_SCL, data);
-OneWireDataCollector tempCollector(PIN_ONE_WIRE, data);
+I2cDataCollector tempPressureCollector(PIN_SDA, PIN_SCL);
+OneWireDataCollector tempCollector(PIN_ONE_WIRE);
 DisplayTask displayTask(PIN_SDA, PIN_SCL);
 
 void connectionStateChanged(WifiConnector::States state);
@@ -81,8 +78,8 @@ WebServerTask webServerTask;
 LedBlinker ledBlinker;
 DataBufferStatus dataBufferStatus(data);
 
-TimerOnChannel channel1(PIN_RELAY_1, "Fan");
-TimerOnChannel channel2(PIN_RELAY_2, "Fan2");
+//TimerOnChannel channel1(PIN_RELAY_1, "Lamp LED");
+//TimerOnChannel channel2(PIN_RELAY_2, "Spare channel");
 
 void setup()
 {
@@ -94,6 +91,9 @@ void setup()
     writeConfig(F("configPassword"), F("password"));
     logPrintf("Formatting filesystem, the default password is %s", readConfig(F("configPassword")).c_str());
   }
+  tempPressureCollector.registerBuffersData(data);
+  tempCollector.registerBuffersData(data);
+  webServerTask.registerBuffersData(data);
   
   //these tasks are always running
   addTask(&ledBlinker);
@@ -127,8 +127,9 @@ void connectionStateChanged(WifiConnector::States state)
 
     case WifiConnector::States::AP:
     {
-      webServerTask.reset();
+      webServerTask.reset();      
       webServerTask.resume();
+      // TODO manage the essid and pwd for first connection!
       String ip = WiFi.softAPIP().toString();
       logPrintf("IP = %s", ip.c_str());
       return;
@@ -144,7 +145,3 @@ void connectionStateChanged(WifiConnector::States state)
     }
   }
 }
-
-
-
-

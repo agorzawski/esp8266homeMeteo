@@ -1,7 +1,7 @@
 /**
  * 2017 arek gorzawski
  */
-
+#pragma once
 #include "CircularBuffer.h"
 #include "utils.h"
 #include <vector>
@@ -20,7 +20,7 @@ class BufferedMeteoData
         _data.push_back(dataBuffer);
         
         _units.push_back(label);
-        Serial.printf("Assigned buffer nb. %d to values [%s]\n", _id, label);
+        logPrintf("Assigned buffer nb. %d to values [%s]\n", _id, label);
         return _id++;
     }    
     
@@ -28,7 +28,7 @@ class BufferedMeteoData
     {
         uint32_t t = 7;
         _data[id].write(&value, 1);
-//        _times[id].write(65, 1);
+        //_times[id].write(0, 1);
         Serial.print(value, 2); Serial.printf("[%s]\t\n", _units[id]);
     }
     
@@ -44,7 +44,7 @@ class BufferedMeteoData
     {
         for (uint32_t id = 0; id < _id; id++)
         {
-          Serial.printf("[time] %d /300 [%s] %d /300 \n", _times[id].getUsed(), _units[id], _data[id].getUsed() );      
+          logPrintf("[time] %d /300 [%s] %d /300 \n", _times[id].getUsed(), _units[id], _data[id].getUsed() );      
         }
     }    
     

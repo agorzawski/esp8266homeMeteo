@@ -6,10 +6,10 @@
 
 ESP8266WebServer webServer(80);
 
-//void WebServerTask::registerBuffersData(BufferedMeteoData& data)
-//{
-//    _data = &data;
-//}   
+void WebServerTask::registerBuffersData(BufferedMeteoData& data)
+{
+    _data = &data;
+}   
  
 String updateWebPage()
 {    
@@ -25,14 +25,29 @@ String updateWebPage()
     webPage += "</head>\n<body>\n <div style=\"max-width: 600px;\"> \n";
     //content
     webPage += "<h1>MeteoStation v0.1</h2>";         
+    
+//    BufferedMeteoData* a =  WebServerTask::getBuffer()
+//    float* dataArray = a -> getData(0);
+//    for (int i=0; i < sizeof(dataArray); i++)
+//    {     
+//      webPage += String(dataArray[i])+" \n ";
+//    }
     webPage += "</body>\n</html> \n";
     return webPage;
 }    
+
+BufferedMeteoData* WebServerTask::getBuffer()
+{
+  return _data;
+}
+
 
 WebServerTask::WebServerTask()
 {
   reset();
 }
+
+
 
 void WebServerTask::reset()
 {
@@ -47,7 +62,7 @@ void WebServerTask::run()
   if (!started)
   {
     started = true;
-    //logPrintf("WebServerTask - configuring server");
+    logPrintf("WebServerTask - configuring server");
     
     webServer.on("/", [](){
       webServer.send(200, "text/html", updateWebPage());
@@ -55,7 +70,7 @@ void WebServerTask::run()
 
     webServer.begin();
 
-    //logPrintf("WebServerTask - ready!");
+    logPrintf("WebServerTask - ready!");
     return;
   }
   webServer.handleClient();

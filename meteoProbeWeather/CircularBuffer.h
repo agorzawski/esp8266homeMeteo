@@ -1,6 +1,7 @@
 /**
  * 2017 bartosz bielawski, arek gorzawski
  */
+#pragma once
 #include <cstdlib>
 
 template <typename T, int N>
@@ -23,7 +24,8 @@ class CircularBuffer
  
       _writeIndex += size;
       _writeIndex %= N;
-      _used += size; // todo poprawic inkrementacjie 
+      _used += size; 
+      if (_used > N) _used = N;
     }
  
     void discard(size_t size)

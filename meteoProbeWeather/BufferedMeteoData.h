@@ -7,6 +7,7 @@
 #include <vector>
 
 #define BUFFER_SIZE 300
+#define VERBOSE 0
 
 class BufferedMeteoData
 {
@@ -41,10 +42,13 @@ class BufferedMeteoData
     }
     
     void printBuffersStatus()
-    {
-        for (uint32_t id = 0; id < _id; id++)
+    {   
+        if (VERBOSE)
         {
-          logPrintf("[time] %d /300 [%s] %d /300 \n", _times[id].getUsed(), _units[id], _data[id].getUsed() );      
+          for (uint32_t id = 0; id < _id; id++)
+          {
+            logPrintf("[time] %d /300 [%s] %d /300 \n", _times[id].getUsed(), _units[id], _data[id].getUsed() );      
+          }
         }
     }    
     

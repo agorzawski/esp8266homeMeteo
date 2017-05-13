@@ -91,6 +91,7 @@ void setup()
     writeConfig(F("configPassword"), F("password"));
     logPrintf("Formatting filesystem, the default password is %s", readConfig(F("configPassword")).c_str());
   }
+  
   tempPressureCollector.registerBuffersData(data);
   tempCollector.registerBuffersData(data);
   webServerTask.registerBuffersData(data);

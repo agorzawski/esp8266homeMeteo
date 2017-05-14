@@ -91,10 +91,13 @@ void setup()
     writeConfig(F("configPassword"), F("password"));
     logPrintf("Formatting filesystem, the default password is %s", readConfig(F("configPassword")).c_str());
   }
-  
+
+  // data suppliers
   tempPressureCollector.registerBuffersData(data);
   tempCollector.registerBuffersData(data);
+  //data consumers
   webServerTask.registerBuffersData(data);
+  displayTask.registerBuffersData(data);
   
   //these tasks are always running
   addTask(&ledBlinker);
@@ -110,6 +113,7 @@ void setup()
   
   setupTasks();  
   String macAddress = WiFi.macAddress();
+  IPAddress ip = WiFi.localIP();
   logPrintf("MAC Address: %s", macAddress.c_str());
 }
 
@@ -142,6 +146,8 @@ void connectionStateChanged(WifiConnector::States state)
       webServerTask.resume();
       String ip = WiFi.localIP().toString();
       logPrintf("IP = %s", ip.c_str());
+      displayTask.setIP(ip);
+      displayTask.setSSID(WiFi.SSID());
       break;
     }
   }

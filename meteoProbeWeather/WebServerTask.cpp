@@ -27,11 +27,9 @@ String updateWebPage()
     webPage += "<h1>MeteoStation v0.1</h2>";         
     
 //    BufferedMeteoData* a =  WebServerTask::getBuffer()
-//    float* dataArray = a -> getData(0);
-//    for (int i=0; i < sizeof(dataArray); i++)
-//    {     
-//      webPage += String(dataArray[i])+" \n ";
-//    }
+//    float dataArray = a -> read(0);
+    
+//    webPage += String(dataArray[i])+" \n ";
     webPage += "</body>\n</html> \n";
     return webPage;
 }    

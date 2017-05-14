@@ -33,12 +33,9 @@ class BufferedMeteoData
         Serial.print(value, 2); Serial.printf("[%s]\t\n", _units[id]);
     }
     
-    float* getData(uint32_t id)
+    float getData(uint32_t id)
     {
-        float* toReturn;
-        _data[id].read(toReturn, _data[id].getUsed());
-        _data[id].reset();
-        return toReturn;
+        return _data[id].read();
     }
     
     void printBuffersStatus()

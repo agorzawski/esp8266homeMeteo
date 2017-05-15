@@ -78,7 +78,7 @@ WebServerTask webServerTask;
 LedBlinker ledBlinker;
 DataBufferStatus dataBufferStatus(data);
 
-//TimerOnChannel channel1(PIN_RELAY_1, "Lamp LED");
+TimerOnChannel channel1(PIN_RELAY_1, "Lamp LED");
 //TimerOnChannel channel2(PIN_RELAY_2, "Spare channel");
 
 void setup()
@@ -91,9 +91,13 @@ void setup()
     writeConfig(F("configPassword"), F("password"));
     logPrintf("Formatting filesystem, the default password is %s", readConfig(F("configPassword")).c_str());
   }
+
+  // data suppliers
   tempPressureCollector.registerBuffersData(data);
   tempCollector.registerBuffersData(data);
+  //data consumers
   webServerTask.registerBuffersData(data);
+  displayTask.registerBuffersData(data);
   
   //these tasks are always running
   addTask(&ledBlinker);
@@ -109,6 +113,7 @@ void setup()
   
   setupTasks();  
   String macAddress = WiFi.macAddress();
+  IPAddress ip = WiFi.localIP();
   logPrintf("MAC Address: %s", macAddress.c_str());
 }
 
@@ -132,6 +137,8 @@ void connectionStateChanged(WifiConnector::States state)
       // TODO manage the essid and pwd for first connection!
       String ip = WiFi.softAPIP().toString();
       logPrintf("IP = %s", ip.c_str());
+      displayTask.setIP(ip);
+      displayTask.setSSID(WiFi.SSID());
       return;
     }
 
@@ -141,6 +148,8 @@ void connectionStateChanged(WifiConnector::States state)
       webServerTask.resume();
       String ip = WiFi.localIP().toString();
       logPrintf("IP = %s", ip.c_str());
+      displayTask.setIP(ip);
+      displayTask.setSSID(WiFi.SSID());
       break;
     }
   }

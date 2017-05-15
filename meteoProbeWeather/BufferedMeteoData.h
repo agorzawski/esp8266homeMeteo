@@ -7,6 +7,7 @@
 #include <vector>
 
 #define BUFFER_SIZE 300
+#define VERBOSE 0
 
 class BufferedMeteoData
 {
@@ -32,19 +33,26 @@ class BufferedMeteoData
         Serial.print(value, 2); Serial.printf("[%s]\t\n", _units[id]);
     }
     
-    float* getData(uint32_t id)
+    float getData(uint32_t id)
     {
-        float* toReturn;
-        _data[id].read(toReturn, _data[id].getUsed());
-        _data[id].reset();
-        return toReturn;
+        return _data[id].read();
+    }
+
+    float* getDataAll(uint32_t id)
+    {
+      float* toReturn;
+       _data[id].read(toReturn, _data[id].getSize());
+      return toReturn;
     }
     
     void printBuffersStatus()
-    {
-        for (uint32_t id = 0; id < _id; id++)
+    {   
+        if (VERBOSE)
         {
-          logPrintf("[time] %d /300 [%s] %d /300 \n", _times[id].getUsed(), _units[id], _data[id].getUsed() );      
+          for (uint32_t id = 0; id < _id; id++)
+          {
+            logPrintf("[time] %d /300 [%s] %d /300 \n", _times[id].getUsed(), _units[id], _data[id].getUsed() );      
+          }
         }
     }    
     

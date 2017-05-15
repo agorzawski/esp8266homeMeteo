@@ -29,6 +29,7 @@ class I2cDataCollector : public Task
         _data = &data;
         _bufferIdTemp = _data -> getId("degC [bmp280]");
         _bufferIdPressure = _data -> getId("mBar [bmp280]");
+        
         _bufferIdLux = _data -> getId("lux [max44009]");    
     }
 

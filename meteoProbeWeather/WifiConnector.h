@@ -56,7 +56,8 @@ class WifiConnector: public Tasks::TaskCRTP<WifiConnector>
       WiFi.disconnect();
       WiFi.mode(WIFI_STA);
 
-      String pwd   = readConfig("wifiPassword");
+//      String pwd   = readConfig("wifiPassword");
+      String pwd   = "Cern0wiec";
 
       logPrintf("Running in CLIENT mode...");
       logPrintf("Connecting to %s - %s", essid.c_str(), pwd.c_str());
@@ -71,7 +72,8 @@ class WifiConnector: public Tasks::TaskCRTP<WifiConnector>
       if (callback)
         callback(States::NONE);
 
-      auto essid = readConfig("essid");
+//      auto essid = readConfig("essid");
+      String essid = "a_r_o_2";
 
       if (essid.length() == 0)
         mainState = States::AP;

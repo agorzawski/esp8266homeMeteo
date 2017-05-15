@@ -22,6 +22,7 @@ private:
   uint64_t cntr = 0;
   BufferedMeteoData* _data = NULL;
   BufferedMeteoData* getBuffer();
+  String updateWebPage(); 
 };
 
 #endif /* WEBSERVERTASK_H_ */

@@ -78,7 +78,7 @@ WebServerTask webServerTask;
 LedBlinker ledBlinker;
 DataBufferStatus dataBufferStatus(data);
 
-//TimerOnChannel channel1(PIN_RELAY_1, "Lamp LED");
+TimerOnChannel channel1(PIN_RELAY_1, "Lamp LED");
 //TimerOnChannel channel2(PIN_RELAY_2, "Spare channel");
 
 void setup()
@@ -137,6 +137,8 @@ void connectionStateChanged(WifiConnector::States state)
       // TODO manage the essid and pwd for first connection!
       String ip = WiFi.softAPIP().toString();
       logPrintf("IP = %s", ip.c_str());
+      displayTask.setIP(ip);
+      displayTask.setSSID(WiFi.SSID());
       return;
     }
 

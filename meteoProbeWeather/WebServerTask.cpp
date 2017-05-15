@@ -11,7 +11,7 @@ void WebServerTask::registerBuffersData(BufferedMeteoData& data)
     _data = &data;
 }   
  
-String updateWebPage()
+String WebServerTask::updateWebPage()
 {    
     String webPage = "";
     webPage += "<!DOCTYPE HTML>\r\n<html>\n<head>\n";
@@ -25,11 +25,12 @@ String updateWebPage()
     webPage += "</head>\n<body>\n <div style=\"max-width: 600px;\"> \n";
     //content
     webPage += "<h1>MeteoStation v0.1</h2>";         
+
+    BufferedMeteoData* data = getBuffer();  
+//    float lastTemp = data -> getData(0);
+//    float* tempData =  data -> getDataAll(0);
     
-//    BufferedMeteoData* a =  WebServerTask::getBuffer()
-//    float dataArray = a -> read(0);
-    
-//    webPage += String(dataArray[i])+" \n ";
+//    webPage += String(lastTemp)+" \n ";
     webPage += "</body>\n</html> \n";
     return webPage;
 }    
@@ -39,13 +40,10 @@ BufferedMeteoData* WebServerTask::getBuffer()
   return _data;
 }
 
-
 WebServerTask::WebServerTask()
 {
   reset();
 }
-
-
 
 void WebServerTask::reset()
 {

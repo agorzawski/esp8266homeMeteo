@@ -5,6 +5,22 @@ using namespace Tasks;
 class DisplayTask : public Task
 {
   public: 
+
+    enum class DataDisplay
+    {
+      TEMPERATURE_IN,
+      TEMPERATURE_OUT,
+      PRESSURE,
+      NONE
+    };
+
+    enum class ConfDisplay
+    {
+      WIFI,
+      TEMPERATURE_PROBES,
+      NONE
+    };
+    
     
     DisplayTask(int pin_sda, int pin_scl){   
       display.begin();
@@ -17,12 +33,12 @@ class DisplayTask : public Task
         _counter++;
         if (_counter % 5 == 0)
         {
-          _page = 2;
+          _page = DataDisplay::PRESSURE;
           _counter = 1;
         }else{
-          _page = 1;
+          _page = DataDisplay::TEMPERATURE_IN;
         }
-        
+                
         logPrintf("Will write something on the OLED screen :) ");
         sleep(2_s);
         updateDisplay();
@@ -43,6 +59,7 @@ class DisplayTask : public Task
       _ip = ip;
     }
 
+
     void updateDisplay()
     {
 
@@ -50,13 +67,14 @@ class DisplayTask : public Task
       float pressure = _data->getData(1); 
       display.clearDisplay();
       updateHeader();
-      if (_page == 1)
+      
+      if (_page == DataDisplay::TEMPERATURE_IN)
       {
         updateDisplayPage("Indoor", temp, "C", 1);
       }
-      if (_page == 2)
+      if (_page == DataDisplay::PRESSURE)
       {
-        updateDisplayPage("Pressure", pressure, "mBar",0);        
+        updateDisplayPage("Pressure", pressure, "mBar", 0);        
       }
            
       display.display();        
@@ -65,10 +83,11 @@ class DisplayTask : public Task
     
   private:
     int _counter = 0;
-    int _page = 1;
+    DataDisplay _page = DataDisplay::TEMPERATURE_IN;
+    ConfDisplay _displayWifiConf = ConfDisplay::WIFI;
     float _temp = 20.1;
     String _ip = "0.0.0.0";
-    String _ssid = "Test_set_me_UP!";
+    String _ssid = "'Set me up' IP!";
     BufferedMeteoData* _data = NULL;    
     Adafruit_SSD1306 display;
 
@@ -77,20 +96,26 @@ class DisplayTask : public Task
       display.setTextSize(1);
       display.setTextColor(WHITE);
       display.setCursor(0,0);
-      display.print("Wifi "); display.println(_ssid);
-      display.println(_ip);      
+
+      if (_displayWifiConf == ConfDisplay::WIFI)
+      {
+        display.print("Wifi: "); display.println(_ssid);
+        display.println(_ip);
+      }         
+        
     }
 
     void updateDisplayPage(String desc, float value, String unit, int decimalDigit)
     {
         display.setTextSize(2);
         display.setTextColor(WHITE);
-        display.setCursor(30,18);
+        display.setCursor(0,18);
         display.print(desc);     
-        display.setCursor(10,41);
+        display.setCursor(15,41);
         display.setTextSize(3);
         display.setTextColor(WHITE);
-        display.print(value, decimalDigit); 
+        display.print(value, decimalDigit);
+        display.setTextSize(2); 
         display.print(unit); 
     }
     

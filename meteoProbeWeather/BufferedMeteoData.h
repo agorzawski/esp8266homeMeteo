@@ -37,6 +37,13 @@ class BufferedMeteoData
     {
         return _data[id].read();
     }
+
+    float* getDataAll(uint32_t id)
+    {
+      float* toReturn;
+       _data[id].read(toReturn, _data[id].getSize());
+      return toReturn;
+    }
     
     void printBuffersStatus()
     {   

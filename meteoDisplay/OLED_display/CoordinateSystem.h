@@ -1,3 +1,7 @@
+/*
+ * This is a library for scaling given  arrays (x & y) down/up to the integer axes, to be used i.e. in the led displays.
+ * 2002 arek gorzawski
+ */
 #ifndef CoordinateSystem_h
 #define CoordinateSystem_h
 

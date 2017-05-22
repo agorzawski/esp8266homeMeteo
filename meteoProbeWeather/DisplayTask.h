@@ -37,9 +37,8 @@ class DisplayTask : public Task
           _counter = 1;
         }else{
           _page = DataDisplay::TEMPERATURE_IN;
-        }
-                
-        logPrintf("Will write something on the OLED screen :) ");
+        }                
+        //logPrintf("Will write something on the OLED screen :) ");
         sleep(2_s);
         updateDisplay();
     }
@@ -102,7 +101,6 @@ class DisplayTask : public Task
         display.print("Wifi: "); display.println(_ssid);
         display.println(_ip);
       }         
-        
     }
 
     void updateDisplayPage(String desc, float value, String unit, int decimalDigit)

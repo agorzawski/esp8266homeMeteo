@@ -20,17 +20,39 @@ String WebServerTask::updateWebPage()
     webPage += "<title>Home Meteo Arduino</title>\n";
     //bootstrap
     webPage += "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">\n";                    
+    webPage += "<link rel=\"stylesheet\" href=\"http://agorzaws.web.cern.ch/agorzaws/thermometer.css\">\n";     
+                       
     webPage += "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js\"></script>\n";
-    webPage += "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>\n";      
+    webPage += "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>\n";  
+    //webPage += "<style></style>";    
+
     webPage += "</head>\n<body>\n <div style=\"max-width: 600px;\"> \n";
     //content
-    webPage += "<h1>MeteoStation v0.1</h2>";         
+    webPage += "<h1>MeteoStation v0.2</h1>";         
 
     BufferedMeteoData* data = getBuffer();  
-//    float lastTemp = data -> getData(0);
+
+    webPage += "<hr>";
+    webPage += "<h2>Last data:</h2>";    
+    float lastTemp = data -> getData(0);
+    float lastPressure = data -> getData(1);
+
+    webPage += "<h4>" + String(lastTemp) + "&deg;C,  " + String(lastPressure)+ "mBar</h4>";    
+    webPage += "<hr>";
+
+    webPage += "<div>";
+    webPage += "<div class=\"leftdisp\"><span class=\"thermometer\">"+ String(lastTemp) + "&deg;C</span></div>";
+    webPage += "<div class=\"rightdisp\"><span class=\"thermometer\">"+ String(lastPressure)+ "mBar</span></div>";
+    webPage += "</div>";
+//    webPage += "<hr>";
+//    webPage += "<h4>Temperature</h4>";    
 //    float* tempData =  data -> getDataAll(0);
-    
-//    webPage += String(lastTemp)+" \n ";
+//    float* pressureData =  data -> getDataAll(1);
+//    for (int i=0; i < 4; i++)
+//    {
+//      webPage += String(tempData[i]) + "degC, " + String(pressureData[i]) + " mBar<br> ";
+//    }      
+    webPage += "2017 arek gorzawski";   
     webPage += "</body>\n</html> \n";
     return webPage;
 }    
@@ -60,8 +82,8 @@ void WebServerTask::run()
     started = true;
     logPrintf("WebServerTask - configuring server");
     
-    webServer.on("/", [](){
-      webServer.send(200, "text/html", updateWebPage());
+    webServer.on("/", [this](){
+      webServer.send(200, "text/html", updateWebPage() );
     });
 
     webServer.begin();
@@ -70,7 +92,6 @@ void WebServerTask::run()
     return;
   }
   webServer.handleClient();
-
 }
 
 WebServerTask::~WebServerTask()

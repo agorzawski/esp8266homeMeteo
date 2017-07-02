@@ -22,11 +22,11 @@ int operator"" _s(unsigned long long int seconds) {return seconds * 1000 / MS_PE
 
 
 //static char dateTimeBuffer[] = "00/00/00 00:00:00";
-static char dateTimeBuffer[20] = "[Initializing.....]";
+static char dateTimeBuffer[] = "[...]";
 
 static time_t previousDateTime = 0;
 
-void blinkStatus(int ledId, int high, int low) 
+void blinkStatus(int ledId, int high, int low)
 {
   digitalWrite(ledId, HIGH);
   delay(high);

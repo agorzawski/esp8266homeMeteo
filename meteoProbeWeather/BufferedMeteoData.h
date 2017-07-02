@@ -6,8 +6,8 @@
 #include "utils.h"
 #include <vector>
 
-#define BUFFER_SIZE 300
-#define VERBOSE 0
+#define BUFFER_SIZE 60
+#define VERBOSE 1
 
 class BufferedMeteoData
 {
@@ -20,18 +20,18 @@ class BufferedMeteoData
 
         _times.push_back(timeBuffer);
         _data.push_back(dataBuffer);
-
         _units.push_back(label);
+
         logPrintf("Assigned buffer nb. %d to values [%s]\n", _id, label);
         return _id++;
     }
 
     void updateData(uint32_t id, float value)
     {
-        uint32_t t = 7;
+        //uint32_t t = 7;
         _data[id].write(&value, 1);
         //_times[id].write(0, 1);
-        Serial.print(value, 2); Serial.printf("[%s]\t\n", _units[id]);
+        //Serial.print(value, 2); Serial.printf("[%s]\t\n", _units[id]);
     }
 
     float getData(uint32_t id)
@@ -46,13 +46,20 @@ class BufferedMeteoData
       return toReturn;
     }
 
+    float* getDataAll(uint32_t id, uint32_t size)
+    {
+      float* toReturn = new float[size];
+       _data[id].read(toReturn, size);
+      return toReturn;
+    }
+
     void printBuffersStatus()
     {
         if (VERBOSE)
         {
           for (uint32_t id = 0; id < _id; id++)
           {
-            logPrintf("[time] %d /300 [%s] %d /300 \n", _times[id].getUsed(), _units[id], _data[id].getUsed() );
+            logPrintf("[time] %d /%d [%s] %d / %d \n", _times[id].getUsed(), BUFFER_SIZE, _units[id], _data[id].getUsed(), BUFFER_SIZE);
           }
         }
     }

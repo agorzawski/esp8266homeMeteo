@@ -4,39 +4,39 @@
 #include "BMP280.h"
 #include "MAX44009.h"
 #include "Wire.h"
+#include "MeteoUtils.h"
 
 #include "task.hpp"
 using namespace Tasks;
 
 class I2cDataCollector : public Task
 {
-  public: 
+  public:
     I2cDataCollector(int pin_sda, int pin_scl)
     {
         _light.begin(pin_sda, pin_scl);
         _temperaturePressure.begin(pin_sda, pin_scl);
-        _temperaturePressure.setOversampling(4);     
+        _temperaturePressure.setOversampling(4);
     }
 
-    I2cDataCollector(int pin_sda, int pin_scl, BufferedMeteoData& data)
+    I2cDataCollector(int pin_sda, int pin_scl, DataBufferManager& data)
     {
       I2cDataCollector(pin_sda, pin_scl);
       registerBuffersData(data);
     }
-    
-    void registerBuffersData(BufferedMeteoData& data)
+
+    void registerBuffersData(DataBufferManager& data)
     {
         _data = &data;
         _bufferIdTemp = _data -> getId("degC [bmp280]");
-        _bufferIdPressure = _data -> getId("mBar [bmp280]");
-        
-        _bufferIdLux = _data -> getId("lux [max44009]");    
+        _bufferIdPressure = _data -> getId("hPa [bmp280]");
+        _bufferIdLux = _data -> getId("lux [max44009]");
     }
 
     virtual void run()
     {
          if ((millis() - _millisOnLastCheck) > 1000)
-         {       
+         {
               double T,P;
               char result = _temperaturePressure.startMeasurment();
               if(result != 0)
@@ -49,27 +49,26 @@ class I2cDataCollector : public Task
                           {
                             _data -> updateData(_bufferIdTemp, T);
                             delay(10);
-                            _data -> updateData(_bufferIdPressure, P);
+                            _data -> updateData(_bufferIdPressure, getNormalizedPressure(P, 320));
                           }
                      }
               }
-              
+
               float lux = _light.get_lux();
               if (_data != NULL)
-              {        
+              {
                 _data -> updateData(_bufferIdLux, lux);
               }
               _millisOnLastCheck = millis();
-         }     
+         }
     }
 
     private:
-        BufferedMeteoData* _data = NULL;
+        DataBufferManager* _data = NULL;
         uint32_t _bufferIdTemp;
         uint32_t _bufferIdPressure;
-        uint32_t _bufferIdLux;      
+        uint32_t _bufferIdLux;
         BMP280 _temperaturePressure;
         MAX44009 _light;
         long _millisOnLastCheck = 0;
 };
-

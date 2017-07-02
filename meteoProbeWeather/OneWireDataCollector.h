@@ -14,38 +14,38 @@ class OneWireDataCollector : public Task
       {
          OneWire oneWire(bus);
          _sensors = DallasTemperature(&oneWire);
-         _sensors.begin(); 
+         _sensors.begin();
       }
 
-      OneWireDataCollector(int bus, BufferedMeteoData& data)
+      OneWireDataCollector(int bus, DataBufferManager& data)
       {
          //FIXME if calling the other constructor gets the 'bus shadows a parameter'
          OneWire oneWire(bus);
          _sensors = DallasTemperature(&oneWire);
-         _sensors.begin(); 
+         _sensors.begin();
         registerBuffersData(data);
       }
-    
-      void registerBuffersData(BufferedMeteoData& data)
+
+      void registerBuffersData(DataBufferManager& data)
       {
           _data = &data;
           for (int i = 0; i < SENSORS_NB; i++)
           {
-            _bufferId[i] = _data -> getId("degC [onewire ]");         
-          }         
+            _bufferId[i] = _data -> getId("degC [onewire]");
+          }
       }
-      
+
       virtual void run()
       {
-         if (millis() - _millisOnLastCheck > 1000)
-         { 
-             _sensors.requestTemperatures();    
+         if (millis() - _millisOnLastCheck > 900)
+         {
+             _sensors.requestTemperatures();
              for (int i = 0; i < SENSORS_NB; i++)
              {
                   double temp = _sensors.getTempCByIndex(i);
                   if (temp <= -127.0)
                   {
-                    logPrintf("[OneWire] Temperature [%d] is disconnected.\n",i+1);
+                    logPrintf("[OneWire] Temperature [%d] is disconnected.\n", i+1);
                     continue;
                   }
                   if (_data != NULL)
@@ -53,13 +53,13 @@ class OneWireDataCollector : public Task
                     _data -> updateData(_bufferId[i], temp);
                   }
               }
-             _millisOnLastCheck = millis();     
+             _millisOnLastCheck = millis();
          }
       }
-  
+
 private:
-    BufferedMeteoData* _data = NULL;
-    uint32_t _bufferId[SENSORS_NB]; 
+    DataBufferManager* _data = NULL;
+    uint32_t _bufferId[SENSORS_NB];
     long _millisOnLastCheck = 0;
-    DallasTemperature _sensors; 
+    DallasTemperature _sensors;
 };

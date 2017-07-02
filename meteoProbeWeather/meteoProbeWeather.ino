@@ -8,6 +8,7 @@
 #include "I2cDataCollector.h"
 #include "OneWireDataCollector.h"
 #include "DisplayTask.h"
+#include "DataBufferManager.h"
 
 #include "task.hpp"
 #include "tasks_utils.h"
@@ -46,40 +47,24 @@ class LedBlinker: public Task
     bool s = false;
 };
 
-class DataBufferStatus: public Task
-{
-  public:
-    DataBufferStatus(BufferedMeteoData& data)
-    {
-      _data = &data;
-    }
-
-    virtual void run()
-    {
-      _data -> printBuffersStatus();
-      sleep(2_s);
-    }
-
-  private:
-    bool s = false;
-    BufferedMeteoData* _data;
-};
-
+//data
+//FIXME move data containers to some other place
 BufferedMeteoData data;
+BufferedMeteoData data1h;
+BufferedMeteoData data60h;
+DataBufferManager dataBufferManager(data, data1h, data60h);
 
+//collectors & displays
 I2cDataCollector tempPressureCollector(PIN_SDA, PIN_SCL);
 OneWireDataCollector tempCollector(PIN_ONE_WIRE);
 DisplayTask displayTask(PIN_SDA, PIN_SCL);
-
-void connectionStateChanged(WifiConnector::States state);
-WifiConnector wifiConnector(connectionStateChanged);
 WebServerTask webServerTask;
 
+// infrastructure
+void connectionStateChanged(WifiConnector::States state);
+WifiConnector wifiConnector(connectionStateChanged);
 LedBlinker ledBlinker;
-DataBufferStatus dataBufferStatus(data);
-
 TimerOnChannel channel1(PIN_RELAY_1, "Lamp LED");
-//TimerOnChannel channel2(PIN_RELAY_2, "Spare channel");
 
 void setup()
 {
@@ -93,25 +78,26 @@ void setup()
   }
 
   // data suppliers
-  tempPressureCollector.registerBuffersData(data);
-  tempCollector.registerBuffersData(data);
+  tempPressureCollector.registerBuffersData(dataBufferManager);
+  //  tempCollector.registerBuffersData(dataBufferManager);
+
   //data consumers
-  webServerTask.registerBuffersData(data);
-  displayTask.registerBuffersData(data);
-  
+  webServerTask.registerBuffersData(dataBufferManager);
+  displayTask.registerBuffersData(dataBufferManager);
+
   //these tasks are always running
   addTask(&ledBlinker);
-  addTask(&dataBufferStatus);
+  addTask(&dataBufferManager);
   addTask(&wifiConnector);
   addTask(&tempPressureCollector);
-  addTask(&tempCollector);
+  //  addTask(&tempCollector);
   addTask(&displayTask);
 
   //and these need to be suspended at the start
   addTask(&webServerTask);
   webServerTask.suspend();
-  
-  setupTasks();  
+
+  setupTasks();
   String macAddress = WiFi.macAddress();
   IPAddress ip = WiFi.localIP();
   logPrintf("MAC Address: %s", macAddress.c_str());
@@ -132,9 +118,9 @@ void connectionStateChanged(WifiConnector::States state)
 
     case WifiConnector::States::AP:
     {
-      webServerTask.reset();      
+      webServerTask.reset();
       webServerTask.resume();
-      // TODO manage the essid and pwd for first connection!
+      //TODO manage the essid and pwd for first connection!
       String ip = WiFi.softAPIP().toString();
       logPrintf("IP = %s", ip.c_str());
       displayTask.setIP(ip);

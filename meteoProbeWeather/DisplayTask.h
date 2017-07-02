@@ -1,10 +1,14 @@
 #include "task.hpp"
 using namespace Tasks;
 #include "Adafruit_SSD1306.h"
+#include "DataBufferManager.h"
+
+#define ONE_DEC 1
+#define NO_DEC 0
 
 class DisplayTask : public Task
 {
-  public: 
+  public:
 
     enum class DataDisplay
     {
@@ -20,14 +24,14 @@ class DisplayTask : public Task
       TEMPERATURE_PROBES,
       NONE
     };
-    
-    
-    DisplayTask(int pin_sda, int pin_scl){   
+
+
+    DisplayTask(int pin_sda, int pin_scl){
       display.begin();
       display.clearDisplay();
       Serial.begin(115000);
     }
-    
+
     virtual void run()
     {
         _counter++;
@@ -37,15 +41,15 @@ class DisplayTask : public Task
           _counter = 1;
         }else{
           _page = DataDisplay::TEMPERATURE_IN;
-        }                
+        }
         //logPrintf("Will write something on the OLED screen :) ");
         sleep(2_s);
         updateDisplay();
     }
 
-    void registerBuffersData(BufferedMeteoData& data)
+    void registerBuffersData(DataBufferManager& dataBufferManager)
     {
-        _data = &data;    
+        _dataBufferManager = &dataBufferManager;
     }
 
     void setSSID(String ssid)
@@ -61,25 +65,29 @@ class DisplayTask : public Task
 
     void updateDisplay()
     {
+      float temp = _dataBufferManager->getCurrentData(0);
+      float tempTendence = _dataBufferManager->getTendence(0);
 
-      float temp = _data->getData(0);
-      float pressure = _data->getData(1); 
+      float pressure = _dataBufferManager->getCurrentData(1);
+      float pressureTendence = _dataBufferManager->getTendence(1);
+
       display.clearDisplay();
       updateHeader();
-      
+
       if (_page == DataDisplay::TEMPERATURE_IN)
       {
-        updateDisplayPage("Indoor", temp, "C", 1);
+        updateDisplayPage("Indoor", temp, tempTendence , "C", ONE_DEC);
       }
+
       if (_page == DataDisplay::PRESSURE)
       {
-        updateDisplayPage("Pressure", pressure, "mBar", 0);        
+        updateDisplayPage("Pressure", pressure, pressureTendence, "hPa", NO_DEC);
       }
-           
-      display.display();        
+
+      display.display();
     }
 
-    
+
   private:
     int _counter = 0;
     DataDisplay _page = DataDisplay::TEMPERATURE_IN;
@@ -87,7 +95,7 @@ class DisplayTask : public Task
     float _temp = 20.1;
     String _ip = "0.0.0.0";
     String _ssid = "'Set me up' IP!";
-    BufferedMeteoData* _data = NULL;    
+    DataBufferManager* _dataBufferManager = NULL;
     Adafruit_SSD1306 display;
 
     void updateHeader()
@@ -100,21 +108,58 @@ class DisplayTask : public Task
       {
         display.print("Wifi: "); display.println(_ssid);
         display.println(_ip);
-      }         
+      }
     }
 
-    void updateDisplayPage(String desc, float value, String unit, int decimalDigit)
+    void updateDisplayPage(String desc, float value, float tendence, String unit, int decimalDigit)
     {
         display.setTextSize(2);
         display.setTextColor(WHITE);
+
         display.setCursor(0,18);
-        display.print(desc);     
-        display.setCursor(15,41);
+        display.print(desc);
+
+        display.setCursor(10,39);
         display.setTextSize(3);
         display.setTextColor(WHITE);
         display.print(value, decimalDigit);
-        display.setTextSize(2); 
-        display.print(unit); 
+        display.setTextSize(2);
+        display.print(unit);
+
+        if (abs(tendence) - 0.25 > 0 )
+        {
+          display.setCursor(98,10);
+          display.setTextSize(1);
+          display.setTextColor(WHITE);
+          display.print(tendence, decimalDigit);
+          display.setCursor(98,30);
+          display.print(_dataBufferManager -> getActualTendenceLabel());
+          drawArrow(tendence, 24);
+        }
     }
-    
-};    
+
+    void drawArrow(float tendence, int arbitY)
+    {
+      if (abs(tendence) - 0.75 < 0)
+      {
+        display.drawLine(100, arbitY, 120, arbitY, WHITE);
+        display.drawLine(115, arbitY-3, 120, arbitY, WHITE);
+        display.drawLine(115, arbitY+3, 120, arbitY, WHITE);
+      }
+      else{
+        if (tendence > 0 )
+        {
+          display.drawLine(100, arbitY+5, 120, arbitY-5, WHITE);
+          display.drawLine(115, arbitY-6, 120, arbitY-5, WHITE);
+          display.drawLine(117, arbitY+2, 120, arbitY-5, WHITE);
+        }
+        if (tendence < 0 )
+        {
+          display.drawLine(100, arbitY-5, 120, arbitY+5, WHITE);
+          display.drawLine(115, arbitY-2, 120, arbitY+5, WHITE);
+          display.drawLine(117, arbitY+3, 120, arbitY+5, WHITE);
+        }
+      }
+    }
+
+};

@@ -6,7 +6,7 @@
 
 ESP8266WebServer webServer(80);
 
-void WebServerTask::registerBuffersData(BufferedMeteoData& data)
+void WebServerTask::registerBuffersData(DataBufferManager& data)
 {
     _data = &data;
 }
@@ -30,34 +30,35 @@ String WebServerTask::updateWebPage()
     //content
     webPage += "<h1>MeteoStation v0.2</h1>";
 
-    BufferedMeteoData* data = getBuffer();
+    DataBufferManager* data = getBuffer();
 
     webPage += "<hr>";
     webPage += "<h2>Last data:</h2>";
-    float lastTemp = data -> getData(0);
-    float lastPressure = data -> getData(1);
+    float lastTemp = data -> getCurrentData(0);
+    float lastPressure = data -> getCurrentData(1);
 
-    webPage += "<h4>" + String(lastTemp) + "&deg;C,  " + String(lastPressure)+ "mBar</h4>";
+    webPage += "<h4>" + String(lastTemp) + "&deg;C,  " + String(lastPressure)+ "hPa</h4>";
     webPage += "<hr>";
 
     webPage += "<div>";
     webPage += "<div class=\"leftdisp\"><span class=\"thermometer\">"+ String(lastTemp) + "&deg;C</span></div>";
-    webPage += "<div class=\"rightdisp\"><span class=\"thermometer\">"+ String(lastPressure)+ "mBar</span></div>";
+    webPage += "<div class=\"rightdisp\"><span class=\"thermometer\">"+ String(lastPressure)+ "hPa</span></div>";
     webPage += "</div>";
 //    webPage += "<hr>";
 //    webPage += "<h4>Temperature</h4>";
-    float* tempData =  data -> getDataAll(0);
-    float* pressureData =  data -> getDataAll(1);
-    for (int i=0; i < 4; i++)
-    {
-      webPage += String(tempData[i]) + "degC, " + String(pressureData[i]) + " mBar<br> ";
-    }
+    //TODO expose getDataAll() in maneger
+    // float* tempData =  data -> getDataAll(0);
+    // float* pressureData =  data -> getDataAll(1);
+    // for (int i=0; i < 4; i++)
+    // {
+    //   webPage += String(tempData[i]) + "degC, " + String(pressureData[i]) + " mBar<br> ";
+    // }
     webPage += "2017 arek gorzawski";
     webPage += "</body>\n</html> \n";
     return webPage;
 }
 
-BufferedMeteoData* WebServerTask::getBuffer()
+DataBufferManager* WebServerTask::getBuffer()
 {
   return _data;
 }

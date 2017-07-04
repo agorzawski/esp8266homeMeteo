@@ -10,7 +10,7 @@ template <typename T, int N>
 class CircularBuffer
 {
   public:
-    CircularBuffer(): _writeIndex(0), _readIndex(0), _used(0) {}
+    CircularBuffer(): _writeIndex(0), _readIndex(-1), _used(0) {}
 
     void reset()
     {
@@ -26,6 +26,10 @@ class CircularBuffer
 
       _writeIndex += size;
       _writeIndex %= N;
+
+      _readIndex += size;
+      _readIndex %= N;
+
       _used += size;
       if (_used > N) _used = N;
     }
@@ -34,7 +38,7 @@ class CircularBuffer
     {
       _readIndex += size;
       _readIndex %= N;
-      _used -= size;
+      //_used -= size;
     }
 
     void read(T* data, size_t size)
@@ -42,23 +46,22 @@ class CircularBuffer
       //cout << " requested " << size << endl;
       //cout << _readIndex << endl;
       size_t  _readIndexTemp = _readIndex;
-      _readIndex = _readIndex - size;
+      _readIndex -= size;
       //cout << _readIndex << endl;
       for (size_t i = 0; i < size; i++)
       {
          data[i] = _buffer[(_readIndex + i) % N];
       }
       _readIndex = _readIndexTemp;
-      _readIndex %= N;
-      _used -= size;
+      //_used -= size;
     }
 
     T read()
     {
       T r = _buffer[_readIndex];
-      _readIndex += 1;
-      _readIndex %= N;
-      _used -= 1;
+      //_readIndex += 1;
+      //_readIndex %= N;
+      //_used -= 1;
       return r;
     }
 

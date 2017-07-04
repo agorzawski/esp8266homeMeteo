@@ -31,7 +31,7 @@ class OneWireDataCollector : public Task
           _data = &data;
           for (int i = 0; i < SENSORS_NB; i++)
           {
-            _bufferId[i] = _data -> getId("degC [onewire]");
+            _bufferId[i] = _data -> getId("degC ","[onewire]");
           }
       }
 

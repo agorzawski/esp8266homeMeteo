@@ -6,6 +6,7 @@
 
 #include "task.hpp"
 #include "BufferedMeteoData.h"
+#include <math.h>
 
 #define TIME_TO_AGGREGATE 5000
 #define TENDENCE_SIZE 3
@@ -14,6 +15,14 @@ using namespace Tasks;
 class DataBufferManager : public Task
 {
  public:
+
+     enum class BufferLength
+     {
+       MINUTE,
+       HOUR,
+       SIXTY_HOURS
+     };
+
       DataBufferManager(BufferedMeteoData& data, BufferedMeteoData& data1h, BufferedMeteoData& data60h)
       {
         _data = &data;
@@ -26,12 +35,19 @@ class DataBufferManager : public Task
         }
       }
 
-      uint32_t getId(char* label)
+      uint32_t  getId(char* label, char* sensor)
       {
-        uint32_t  id = _data -> getId(label);
-        uint32_t  id2 = _data1h -> getId(label);
-        uint32_t  id3 = _data60h -> getId(label);
+        uint32_t  id = _data -> getId(label, sensor);
+        uint32_t  id2 = _data1h -> getId(label, sensor);
+        uint32_t  id3 = _data60h -> getId(label, sensor);
         return id;
+      }
+
+      size_t getUsed(uint32_t id, BufferLength length)
+      {
+          if (BufferLength::MINUTE == length) return _data -> getUsed(id);
+          if (BufferLength::HOUR == length) return _data1h -> getUsed(id);
+          if (BufferLength::SIXTY_HOURS == length) return _data60h -> getUsed(id);
       }
 
       void updateData(uint32_t id, float value)
@@ -42,6 +58,14 @@ class DataBufferManager : public Task
       float getCurrentData(uint32_t id)
       {
           return _data -> getData(id);
+      }
+
+      float* getDataAll(uint32_t id, BufferLength length)
+      {
+        //TODO dodac sensowny zwrot: jedna tablica z TS i jedna z Vartosciami
+        if (BufferLength::MINUTE == length) return _data -> getDataAll(id);
+        if (BufferLength::HOUR == length) return _data1h -> getDataAll(id);
+        if (BufferLength::SIXTY_HOURS == length) return _data60h -> getDataAll(id);
       }
 
       float getLastAggregatedData(uint32_t id)
@@ -64,7 +88,7 @@ class DataBufferManager : public Task
         logPrintf("------------------------------\n");
 
         logPrintf(" 1mins  agregation start...\n");
-        for (int id = 0; id < 3; id++)
+        for (int id = 0; id < 2; id++)
         {
           aggregateLast(id, TIME_TO_AGGREGATE);
           updateTendences(id);
@@ -94,10 +118,28 @@ class DataBufferManager : public Task
       void aggregateLast(uint32_t id, uint32_t time)
       {
           uint16_t toCollect = 60;
-          float* lastSamples = _data -> getDataAll(id, toCollect);
-          float avg = avgData(lastSamples, toCollect);
-          _data1h -> updateData(id, avg);
 
+          if (_data -> getUsed(id) == _data -> getSize(id))
+          {
+            float* lastSamples = _data -> getDataAll(id, toCollect);
+            float avg = avgData(lastSamples, toCollect);
+
+            if (!std::isinf(avg))
+            {
+              _data1h -> updateData(id, avg);
+            }
+          }
+
+          if (_data1h -> getUsed(id) == _data1h -> getSize(id))
+          {
+            float* lastSamples1h = _data1h -> getDataAll(id, toCollect);
+            float avg1h = avgData(lastSamples1h, toCollect);
+
+            if (!std::isinf(avg1h))
+            {
+              _data60h -> updateData(id, avg1h);
+            }
+          }
       }
 
       void updateTendences(uint32_t id)

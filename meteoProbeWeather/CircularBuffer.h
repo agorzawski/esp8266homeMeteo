@@ -36,32 +36,26 @@ class CircularBuffer
 
     void discard(size_t size)
     {
-      _readIndex += size;
+      _readIndex -= size;
       _readIndex %= N;
-      //_used -= size;
+      _writeIndex -= size;
+      _used -= size;
     }
 
     void read(T* data, size_t size)
     {
-      //cout << " requested " << size << endl;
-      //cout << _readIndex << endl;
       size_t  _readIndexTemp = _readIndex;
       _readIndex -= size;
-      //cout << _readIndex << endl;
       for (size_t i = 0; i < size; i++)
       {
          data[i] = _buffer[(_readIndex + i) % N];
       }
       _readIndex = _readIndexTemp;
-      //_used -= size;
     }
 
     T read()
     {
       T r = _buffer[_readIndex];
-      //_readIndex += 1;
-      //_readIndex %= N;
-      //_used -= 1;
       return r;
     }
 

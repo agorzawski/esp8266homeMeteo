@@ -10,6 +10,8 @@ extern String webMessage;
 
 class WebServerTask: public Tasks::Task {
 public:
+
+
   WebServerTask();
 
   virtual void run();
@@ -23,6 +25,8 @@ private:
   DataBufferManager* _data = NULL;
   DataBufferManager* getBuffer();
   String updateWebPage();
+  String getJavaScriptEntriesForAChannel(uint32_t id, uint32_t axis);
+  String getChannelName(uint32_t id);
 };
 
 #endif /* WEBSERVERTASK_H_ */

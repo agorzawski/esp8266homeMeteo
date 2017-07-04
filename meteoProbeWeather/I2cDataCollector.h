@@ -28,9 +28,9 @@ class I2cDataCollector : public Task
     void registerBuffersData(DataBufferManager& data)
     {
         _data = &data;
-        _bufferIdTemp = _data -> getId("degC [bmp280]");
-        _bufferIdPressure = _data -> getId("hPa [bmp280]");
-        _bufferIdLux = _data -> getId("lux [max44009]");
+        _bufferIdTemp = _data -> getId( "degC","bmp280");
+        _bufferIdPressure = _data -> getId( "hPa","bmp280");
+        _bufferIdLux = _data -> getId( "lux","max44009");
     }
 
     virtual void run()
@@ -49,7 +49,7 @@ class I2cDataCollector : public Task
                           {
                             _data -> updateData(_bufferIdTemp, T);
                             delay(10);
-                            _data -> updateData(_bufferIdPressure, getNormalizedPressure(P, 320));
+                            _data -> updateData(_bufferIdPressure, getNormalizedPressure(P, 406));
                           }
                      }
               }

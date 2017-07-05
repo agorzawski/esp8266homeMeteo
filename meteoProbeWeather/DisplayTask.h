@@ -126,7 +126,7 @@ class DisplayTask : public Task
         display.setTextSize(2);
         display.print(unit);
 
-        if (abs(tendence) - 0.01 > 0 )
+        if (abs(tendence) - 0.015 > 0 )
         {
           display.setCursor(98,10);
           display.setTextSize(1);
@@ -140,7 +140,7 @@ class DisplayTask : public Task
 
     void drawArrow(float tendence, int arbitY)
     {
-      if (abs(tendence) - 0.2 < 0)
+      if (abs(tendence) - 0.015 < 0)  // 1deg / h
       {
         display.drawLine(100, arbitY, 120, arbitY, WHITE);
         display.drawLine(115, arbitY-3, 120, arbitY, WHITE);

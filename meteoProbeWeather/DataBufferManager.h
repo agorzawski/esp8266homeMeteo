@@ -81,12 +81,6 @@ class DataBufferManager : public Task
       virtual void run()
       {
         sleep(60_s);
-        logPrintf("-------------- 1s ----------------\n");
-        _data -> printBuffersStatus();
-        logPrintf("--------------- 1h ---------------\n");
-        _data1h -> printBuffersStatus();
-        logPrintf("------------------------------\n");
-
         logPrintf(" 1mins  agregation start...\n");
         for (int id = 0; id < 2; id++)
         {
@@ -95,11 +89,6 @@ class DataBufferManager : public Task
         }
         logPrintf(" 1mins agregation DONE.\n");
 
-        logPrintf("--------------- 1s ---------------\n");
-        _data -> printBuffersStatus();
-        logPrintf("--------------- 1h ---------------\n");
-        _data1h -> printBuffersStatus();
-        logPrintf("------------------------------\n");
       }
 
       String getActualTendenceLabel()
@@ -119,19 +108,19 @@ class DataBufferManager : public Task
       {
           uint16_t toCollect = 60;
 
-          if (_data -> getUsed(id) == _data -> getSize(id))
-          {
+  //        if (_data -> getUsed(id) == _data -> getSize(id))
+  //        {
             float* lastSamples = _data -> getDataAll(id, toCollect);
-            float avg = avgData(lastSamples, toCollect);
+            float avg1min = avgData(lastSamples, toCollect);
 
-            if (!std::isinf(avg))
+            if (!std::isinf(avg1min))
             {
-              _data1h -> updateData(id, avg);
+              _data1h -> updateData(id, avg1min);
             }
-          }
+//          }
 
-          if (_data1h -> getUsed(id) == _data1h -> getSize(id))
-          {
+//          if (_data1h -> getUsed(id) == _data1h -> getSize(id))
+//          {
             float* lastSamples1h = _data1h -> getDataAll(id, toCollect);
             float avg1h = avgData(lastSamples1h, toCollect);
 
@@ -139,7 +128,7 @@ class DataBufferManager : public Task
             {
               _data60h -> updateData(id, avg1h);
             }
-          }
+  //        }
       }
 
       void updateTendences(uint32_t id)

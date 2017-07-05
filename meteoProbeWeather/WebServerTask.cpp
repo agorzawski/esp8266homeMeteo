@@ -62,37 +62,53 @@ String WebServerTask::getJavaScriptEntriesForAChannel(uint32_t id, uint32_t axis
     String toReturn = "var " + getChannelName(id) + "={";
     String x = "x:[";
     String y = "y:[";
+    int hours = 0;
+    int minutes = 0;
+
     int counter = 0;
     for (int i = 0; i <  data -> getUsed(id, DataBufferManager::BufferLength::SIXTY_HOURS); i++)
     {
-      if (dataArray60h[i] == infinityf()) continue;
-      x +=  String(counter++) + ",";
+      if (dataArray60h[i] == infinityf() || dataArray60h[i] - 1.99 < 0.1) continue;
+      hours = (i + 1) * 3600;
+      x +=  String(hours) + ",";
       y +=  String(dataArray60h[i])+ ",";
+      counter++;
     }
 
-    for (int i = 0; i <  data -> getUsed(id, DataBufferManager::BufferLength::HOUR); i++)
+    size_t minutesUsedInHour = data -> getUsed(id, DataBufferManager::BufferLength::HOUR);
+    for (int i = 0; i <  minutesUsedInHour; i++)
     {
-      if (dataArray1h[i] == infinityf()) continue;
-      x +=  String(counter++) + "," ;
-      y +=  String(dataArray1h[i]) + ",";
+      if (dataArray1h[i] == infinityf() || dataArray1h[i] - 1.99 < 0.1 ) continue;
+      minutes = hours + (i + 1) * 60;
 
-    }
-
-    size_t minuteUsed = data -> getUsed(id, DataBufferManager::BufferLength::MINUTE);
-    for (int i = 0; i <  minuteUsed; i++)
-    {
-      if (dataArray[i] == infinityf()) continue;
-      if (i ==  minuteUsed - 1 )
+      if (i ==  minutesUsedInHour - 1 )
       {
-        x +=  String(counter++);
-        y +=  String(dataArray[i]);
+        x +=  String(minutes);
+        y +=  String(dataArray1h[i]);
       }
       else
       {
-        x +=   String(counter++) + ",";
-        y +=  String(dataArray[i]) + ",";
+        x +=  String(minutes) + ",";
+        y +=  String(dataArray1h[i]) + ",";
       }
+      counter++;
     }
+
+    // size_t minuteUsed = data -> getUsed(id, DataBufferManager::BufferLength::MINUTE);
+    // for (int i = 0; i <  minuteUsed; i++)
+    // {
+    //   if (dataArray[i] == infinityf()) continue;
+    //   if (i ==  minuteUsed - 1 )
+    //   {
+    //     x +=  String(minutes + counter++);
+    //     y +=  String(dataArray[i]);
+    //   }
+    //   else
+    //   {
+    //     x +=   String(minutes + counter++) + ",";
+    //     y +=  String(dataArray[i]) + ",";
+    //   }
+    // }
 
     x += "]";
     y += "]";

@@ -9,11 +9,14 @@
 #include "OneWireDataCollector.h"
 #include "DisplayTask.h"
 #include "DataBufferManager.h"
+#include "MqttHandler.h"
 
 #include "task.hpp"
 #include "tasks_utils.h"
 
 #include <FS.h>
+
+//test
 
 #define P0 1013.25      // default pressure at the see level
 #define PIN_SCL 12      // D6
@@ -63,7 +66,10 @@ WebServerTask webServerTask;
 // infrastructure
 void connectionStateChanged(WifiConnector::States state);
 WifiConnector wifiConnector(connectionStateChanged);
+MqttHandler mqttHandler;
+
 LedBlinker ledBlinker;
+
 TimerOnChannel channel1(PIN_RELAY_1, "Lamp LED");
 
 void setup()
@@ -77,10 +83,13 @@ void setup()
     logPrintf("Formatting filesystem, the default password is %s", readConfig(F("configPassword")).c_str());
   }
 
+  channel1.setMqttTopic("home/meteolamp1");
+  channel1.setMqttHandler(mqttHandler);
+
   // data suppliers
   tempPressureCollector.registerBuffersData(dataBufferManager);
   //  tempCollector.registerBuffersData(dataBufferManager);
-
+  tempPressureCollector.setMqttHandler(mqttHandler);
   //data consumers
   webServerTask.registerBuffersData(dataBufferManager);
   displayTask.registerBuffersData(dataBufferManager);
@@ -92,12 +101,14 @@ void setup()
   addTask(&tempPressureCollector);
   //  addTask(&tempCollector);
   addTask(&displayTask);
-
   //and these need to be suspended at the start
   addTask(&webServerTask);
-  webServerTask.suspend();
+  addTask(&mqttHandler);
 
+  webServerTask.suspend();
+  mqttHandler.suspend();
   setupTasks();
+
   String macAddress = WiFi.macAddress();
   IPAddress ip = WiFi.localIP();
   logPrintf("MAC Address: %s", macAddress.c_str());
@@ -107,6 +118,20 @@ void loop()
 {
   scheduleTasks();
 }
+
+// void connectionMqttStateChanged(Mqtthandler::States state){
+//   switch (state)
+//   {
+//     case Mqtthandler::States::NONE:
+//     {
+//       break;
+//     }
+//     case Mqtthandler::States::CONNECTED:
+//     {
+//       break;
+//     }
+//   }
+// }
 
 void connectionStateChanged(WifiConnector::States state)
 {
@@ -136,6 +161,8 @@ void connectionStateChanged(WifiConnector::States state)
       logPrintf("IP = %s", ip.c_str());
       displayTask.setIP(ip);
       displayTask.setSSID(WiFi.SSID());
+      mqttHandler.reset();
+      mqttHandler.resume();
       break;
     }
   }

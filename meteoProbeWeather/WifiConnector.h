@@ -32,6 +32,7 @@ class WifiConnector: public Tasks::TaskCRTP<WifiConnector>
     {
     }
 
+
     void initAP()
     {
       //run the AP
@@ -64,6 +65,7 @@ class WifiConnector: public Tasks::TaskCRTP<WifiConnector>
 
       WiFi.begin(essid.c_str(), pwd.c_str());
       nextState = &WifiConnector::monitorClientStatus;
+      //_mqttHandler->reconnectMqttServer();
     }
 
     void lateInit()
@@ -120,6 +122,7 @@ class WifiConnector: public Tasks::TaskCRTP<WifiConnector>
 
   private:
     States        mainState = States::CLIENT;
+    
     Callback      callback = nullptr;
     bool        connected = false;
     wl_status_t     status;

@@ -5,6 +5,7 @@
 #include "MAX44009.h"
 #include "Wire.h"
 #include "MeteoUtils.h"
+#include "MqttHandler.h"
 
 #include "task.hpp"
 using namespace Tasks;
@@ -23,6 +24,10 @@ class I2cDataCollector : public Task
     {
       I2cDataCollector(pin_sda, pin_scl);
       registerBuffersData(data);
+    }
+
+    void setMqttHandler(MqttHandler& mqttHandler){
+      _mqttHandler = &mqttHandler;
     }
 
     void registerBuffersData(DataBufferManager& data)
@@ -48,16 +53,21 @@ class I2cDataCollector : public Task
                           if (_data != NULL)
                           {
                             _data -> updateData(_bufferIdTemp, T);
-                            delay(10);
-                            _data -> updateData(_bufferIdPressure, getNormalizedPressure(P, 406));
+                            delay(20);
+                            float tempPressure =  getNormalizedPressure(P, 406);
+                            _data -> updateData(_bufferIdPressure, tempPressure);
+
+                            snprintf (_msg, 75, "{\"t\":%.2f, \"p\": %.1f}", T, tempPressure);
+                            _mqttHandler -> publish("home/sensor1", _msg);
                           }
                      }
               }
-
+              delay(20);
               float lux = _light.get_lux();
               if (_data != NULL)
               {
                 _data -> updateData(_bufferIdLux, lux);
+                Serial.print("lux : ");Serial.print(lux, 2); Serial.printf("\n");
               }
               _millisOnLastCheck = millis();
          }
@@ -71,4 +81,6 @@ class I2cDataCollector : public Task
         BMP280 _temperaturePressure;
         MAX44009 _light;
         long _millisOnLastCheck = 0;
+        MqttHandler* _mqttHandler = NULL;
+        char _msg[50];
 };

@@ -66,33 +66,33 @@ String WebServerTask::getJavaScriptEntriesForAChannel(uint32_t id, uint32_t axis
     int minutes = 0;
 
     int counter = 0;
-    for (int i = 0; i <  data -> getUsed(id, DataBufferManager::BufferLength::SIXTY_HOURS); i++)
-    {
-      if (dataArray60h[i] == infinityf() || dataArray60h[i] - 1.99 < 0.1) continue;
-      hours = (i + 1) * 3600;
-      x +=  String(hours) + ",";
-      y +=  String(dataArray60h[i])+ ",";
-      counter++;
-    }
-
-    size_t minutesUsedInHour = data -> getUsed(id, DataBufferManager::BufferLength::HOUR);
-    for (int i = 0; i <  minutesUsedInHour; i++)
-    {
-      if (dataArray1h[i] == infinityf() || dataArray1h[i] - 1.99 < 0.1 ) continue;
-      minutes = hours + (i + 1) * 60;
-
-      if (i ==  minutesUsedInHour - 1 )
-      {
-        x +=  String(minutes);
-        y +=  String(dataArray1h[i]);
-      }
-      else
-      {
-        x +=  String(minutes) + ",";
-        y +=  String(dataArray1h[i]) + ",";
-      }
-      counter++;
-    }
+    // for (int i = 0; i <  data -> getUsed(id, DataBufferManager::BufferLength::SIXTY_HOURS); i++)
+    // {
+    //   if (dataArray60h[i] == infinityf() || dataArray60h[i] - 1.99 < 0.1) continue;
+    //   hours = (i + 1) * 3600;
+    //   x +=  String(hours) + ",";
+    //   y +=  String(dataArray60h[i])+ ",";
+    //   counter++;
+    // }
+    //
+    // size_t minutesUsedInHour = data -> getUsed(id, DataBufferManager::BufferLength::HOUR);
+    // for (int i = 0; i <  minutesUsedInHour; i++)
+    // {
+    //   if (dataArray1h[i] == infinityf() || dataArray1h[i] - 1.99 < 0.1 ) continue;
+    //   minutes = hours + (i + 1) * 60;
+    //
+    //   if (i ==  minutesUsedInHour - 1 )
+    //   {
+    //     x +=  String(minutes);
+    //     y +=  String(dataArray1h[i]);
+    //   }
+    //   else
+    //   {
+    //     x +=  String(minutes) + ",";
+    //     y +=  String(dataArray1h[i]) + ",";
+    //   }
+    //   counter++;
+    // }
 
     // size_t minuteUsed = data -> getUsed(id, DataBufferManager::BufferLength::MINUTE);
     // for (int i = 0; i <  minuteUsed; i++)

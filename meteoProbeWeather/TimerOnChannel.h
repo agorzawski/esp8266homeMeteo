@@ -5,27 +5,31 @@
 #ifndef TimerOnChannel_h
 #define TimerOnChannel_h
 #include "Arduino.h"
+#include "MqttHandler.h"
 
 class TimerOnChannel
 {
   public:
     TimerOnChannel(int pin, String label);
-    void configure(int hourOn, int hourOff, int hourUltimateOff, String dayPattern);   
-    
+    void configure(int hourOn, int hourOff, int hourUltimateOff, String dayPattern);
+
+    void setMqttHandler(MqttHandler &mqttHandler);
+    void setMqttTopic(char* topic);
+
     void setOn();
     void setOff();
-    boolean isOn();    
-    
+    boolean isOn();
+
     int hourOn();
     int hourOff();
     int hourUltimateOff();
 
     boolean isManuallyEnabled();
     void restoreAuto();
-    
+
     boolean isForeseenToBeActive(long timeInMillis);
     void adaptStateToConfigurationFor(long timeInMillis);
-    
+
     String getLabel();
     void updateLabel(String label);
     void printStatus();
@@ -38,9 +42,10 @@ class TimerOnChannel
     String _dayPattern = "11111111";
     String _label = "Lights";
     boolean _manual = false;
-
+    MqttHandler* _mqttHandler = NULL;
+    char* _mqttTopic = "test";
     boolean _isOn = false;
-    
+
     static int getNbOfHours(long timeInMillis);
 };
 

@@ -23,10 +23,22 @@ void TimerOnChannel::updateLabel(String label)
   _label = label;
 }
 
+void TimerOnChannel::setMqttHandler(MqttHandler& mqttHandler)
+{
+  _mqttHandler = &mqttHandler;
+}
+
+
+void TimerOnChannel::setMqttTopic(char* topic)
+{
+  _mqttTopic = topic;
+}
+
 void TimerOnChannel::setOn()
 {
   _manual = true;
   digitalWrite(_pin, HIGH);
+  _mqttHandler->publish(_mqttTopic, "ON");
   _isOn = true;
 }
 
@@ -34,6 +46,7 @@ void TimerOnChannel::setOff()
 {
   _manual = true;
   digitalWrite(_pin, LOW);
+  _mqttHandler->publish(_mqttTopic, "OFF");
   _isOn = false;
 }
 
@@ -76,7 +89,7 @@ void TimerOnChannel::printStatus()
   Serial.println("DAYS : "+ _dayPattern);
 }
 
-void TimerOnChannel::configure(int hourOn, int hourOff, int hourUltimateOff, String dayPattern) 
+void TimerOnChannel::configure(int hourOn, int hourOff, int hourUltimateOff, String dayPattern)
 {
   _hourOn = hourOn;
   _hourOff = hourOff;
@@ -88,7 +101,7 @@ void TimerOnChannel::adaptStateToConfigurationFor(long timeInMillis)
 {
   if (_hourOn == 0 && _hourOn == 0)
   {
-    return;  
+    return;
   }
   if (isForeseenToBeActive(timeInMillis)) // sould be on
   {
@@ -97,7 +110,7 @@ void TimerOnChannel::adaptStateToConfigurationFor(long timeInMillis)
           digitalWrite(_pin, HIGH);
           _isOn = true;
     }
-  } 
+  }
   else // should be off
   {
     if (isOn() && !_manual) // on and auto
@@ -110,7 +123,7 @@ void TimerOnChannel::adaptStateToConfigurationFor(long timeInMillis)
           _manual = false;
         }
     }
-  }   
+  }
 }
 
 boolean TimerOnChannel::isForeseenToBeActive(long timeInMillis)
@@ -122,7 +135,7 @@ boolean TimerOnChannel::isForeseenToBeActive(long timeInMillis)
     //TODO for the time being only simple thing like that, add more clever things for after midnight deadline
   } else // in auto mode
   {
-    return ((nbOfHours >= _hourOn) &&  (nbOfHours < _hourOff));  
+    return ((nbOfHours >= _hourOn) &&  (nbOfHours < _hourOff));
   }
 }
 
@@ -135,4 +148,3 @@ int TimerOnChannel::getNbOfHours(long timeInMillis)
 //{
 //  return dayOfMonth + ((month < 3) ? (int)((306 * month - 301) / 10) : (int)((306 * month - 913) / 10) + ((year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 60 : 59));
 //}
-

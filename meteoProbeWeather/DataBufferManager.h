@@ -6,7 +6,6 @@
 
 #include "task.hpp"
 #include "BufferedMeteoData.h"
-#include "MqttHandler.h"
 #include <math.h>
 
 #define TIME_TO_AGGREGATE 5000
@@ -34,10 +33,6 @@ class DataBufferManager : public Task
         {
           _tendence[i] = 0.0;
         }
-      }
-
-      void setMqttHandler(MqttHandler& mqttHandler){
-        _mqttHandler = &mqttHandler;
       }
 
       uint32_t  getId(char* label, char* sensor)
@@ -106,7 +101,6 @@ class DataBufferManager : public Task
       BufferedMeteoData* _data = NULL;
       BufferedMeteoData* _data1h = NULL;
       BufferedMeteoData* _data60h = NULL;
-      MqttHandler* _mqttHandler = NULL;
 
       String _label = "";
       float _tendence[TENDENCE_SIZE];

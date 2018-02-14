@@ -26,8 +26,9 @@ class I2cDataCollector : public Task
       registerBuffersData(data);
     }
 
-    void setMqttHandler(MqttHandler& mqttHandler){
+    void setMqttHandler(MqttHandler& mqttHandler, char* topic){
       _mqttHandler = &mqttHandler;
+      _mqttTopic = topic;
     }
 
     void registerBuffersData(DataBufferManager& data)
@@ -56,9 +57,13 @@ class I2cDataCollector : public Task
                             delay(20);
                             float tempPressure =  getNormalizedPressure(P, 406);
                             _data -> updateData(_bufferIdPressure, tempPressure);
-
+                          }
+                          
+                          if ((millis() - _millisOnLastPublish) > 30000)
+                          {
                             snprintf (_msg, 75, "{\"t\":%.2f, \"p\": %.1f}", T, tempPressure);
-                            _mqttHandler -> publish("home/sensor1", _msg);
+                            _mqttHandler -> publish(_mqttTopic, _msg);
+                            _millisOnLastPublish = millis();
                           }
                      }
               }
@@ -67,7 +72,7 @@ class I2cDataCollector : public Task
               if (_data != NULL)
               {
                 _data -> updateData(_bufferIdLux, lux);
-                Serial.print("lux : ");Serial.print(lux, 2); Serial.printf("\n");
+                //Serial.print("lux : ");Serial.print(lux, 2); Serial.printf("\n");
               }
               _millisOnLastCheck = millis();
          }
@@ -81,6 +86,8 @@ class I2cDataCollector : public Task
         BMP280 _temperaturePressure;
         MAX44009 _light;
         long _millisOnLastCheck = 0;
+        long _millisOnLastPublish = 0;
         MqttHandler* _mqttHandler = NULL;
+        char* _mqttTopic = "home/test";
         char _msg[50];
 };

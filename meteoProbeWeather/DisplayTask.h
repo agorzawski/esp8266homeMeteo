@@ -32,6 +32,10 @@ class DisplayTask : public Task
       Serial.begin(115000);
     }
 
+    void setMqttStatus(String status){
+        _mqttStatus = status;
+    }
+
     virtual void run()
     {
         _counter++;
@@ -95,6 +99,7 @@ class DisplayTask : public Task
     float _temp = 20.1;
     String _ip = "0.0.0.0";
     String _ssid = "'Set me up' IP!";
+    String _mqttStatus = "SET-UP";
     DataBufferManager* _dataBufferManager = NULL;
     Adafruit_SSD1306 display;
 
@@ -107,7 +112,7 @@ class DisplayTask : public Task
       if (_displayWifiConf == ConfDisplay::WIFI)
       {
         display.print("Wifi: "); display.println(_ssid);
-        display.println(_ip);
+        display.print(_ip); display.print("/ "); display.println(_mqttStatus);
       }
     }
 
@@ -126,16 +131,16 @@ class DisplayTask : public Task
         display.setTextSize(2);
         display.print(unit);
 
-        if (abs(tendence) - 0.015 > 0 )
-        {
-          display.setCursor(98,10);
-          display.setTextSize(1);
-          display.setTextColor(WHITE);
-          display.print(tendence, decimalDigit);
-          display.setCursor(98,30);
-          display.print(_dataBufferManager -> getActualTendenceLabel());
-          drawArrow(tendence, 24);
-        }
+        // if (abs(tendence) - 0.015 > 0 )
+        // {
+        //   display.setCursor(98,10);
+        //   display.setTextSize(1);
+        //   display.setTextColor(WHITE);
+        //   display.print(tendence, decimalDigit);
+        //   display.setCursor(98,30);
+        //   display.print(_dataBufferManager -> getActualTendenceLabel());
+        //   drawArrow(tendence, 24);
+        // }
     }
 
     void drawArrow(float tendence, int arbitY)

@@ -64,8 +64,7 @@ class WifiConnector: public Tasks::TaskCRTP<WifiConnector>
       logPrintf("Connecting to %s - %s", essid.c_str(), pwd.c_str());
 
       WiFi.begin(essid.c_str(), pwd.c_str());
-      nextState = &WifiConnector::monitorClientStatus;
-      //_mqttHandler->reconnectMqttServer();
+      nextState = &WifiConnector::monitorClientStatus;      
     }
 
     void lateInit()
@@ -122,7 +121,7 @@ class WifiConnector: public Tasks::TaskCRTP<WifiConnector>
 
   private:
     States        mainState = States::CLIENT;
-    
+
     Callback      callback = nullptr;
     bool        connected = false;
     wl_status_t     status;

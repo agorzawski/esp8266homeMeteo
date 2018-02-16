@@ -96,17 +96,17 @@ void setup()
   displayTask.registerBuffersData(dataBufferManager);
 
   // outside wold communication!
-  channel1.setMqttHandler(mqttHandler, "home/meteolamp1/channel1");
-  channel2.setMqttHandler(mqttHandler, "home/meteolamp1/channel2");
-  channel3.setMqttHandler(mqttHandler, "home/meteolamp1/channel3");
-  tempPressureCollector.setMqttHandler(mqttHandler, "home/sensor1");
+  channel1.setMqttHandler(mqttHandler, "home/meteolamp3/channel1");
+  channel2.setMqttHandler(mqttHandler, "home/meteolamp3/channel2");
+  channel3.setMqttHandler(mqttHandler, "home/meteolamp3/channel3");
+  tempPressureCollector.setMqttHandler(mqttHandler, "home/sensor3");
 
   //these tasks are always running
   addTask(&ledBlinker);
   addTask(&dataBufferManager);
   addTask(&wifiConnector);
   addTask(&tempPressureCollector);
-  //addTask(&tempCollector);
+  addTask(&tempCollector);
   addTask(&displayTask);
   //and these need to be suspended at the start
   addTask(&webServerTask);
@@ -137,9 +137,9 @@ void connectionMqttStateChanged(MqttHandler::States state){
     case MqttHandler::States::CONNECTED:
     {
       displayTask.setMqttStatus("CONN");
-      channel1.subscribe();
-      channel2.subscribe();
-      channel3.subscribe();
+      //channel1.subscribe();
+      //channel2.subscribe();
+      //channel3.subscribe();
 
       channel1.setOn();
       channel2.setOn();

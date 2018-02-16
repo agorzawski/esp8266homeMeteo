@@ -43,10 +43,10 @@ class DisplayTask : public Task
         {
           _page = DataDisplay::PRESSURE;
           _counter = 1;
-        }else{
+        } else {
           _page = DataDisplay::TEMPERATURE_IN;
         }
-        //logPrintf("Will write something on the OLED screen :) ");
+
         sleep(2_s);
         updateDisplay();
     }

@@ -24,7 +24,7 @@ class MqttHandler : public Task
      {
       _client = new PubSubClient(_espClient);
       _client -> setServer(mqtt_server, 1883);
-      //_client -> setCallback(callbackMqtt);
+     //_client -> setCallback(callbackFunction);
      }
 
       virtual void run()
@@ -39,7 +39,7 @@ class MqttHandler : public Task
         if (now - lastMsg > 30000 && _mainState == States::CONNECTED) {
           lastMsg = now;
           ++value;
-          snprintf (msg, 75, "hello world #%ld", value);
+          snprintf(msg, 75, "hello #%ld", value);
           _client -> publish("homeassistant/all", msg);
         }
 
@@ -54,9 +54,12 @@ class MqttHandler : public Task
         int index = 0;
         while (!_client->connected()) {
           Serial.print("Attempting MQTT connection...");
-          String clientId = "ESP8266Client-";
-          clientId += String(random(0xffff), HEX);
-          if (_client -> connect(clientId.c_str(), mqtt_user, mqtt_pass)) {
+          if (_clientId == "")
+          {
+            _clientId = "MeteoProbe-";
+            _clientId += String(random(0xffff), HEX);
+          }
+          if (_client -> connect(_clientId.c_str(), mqtt_user, mqtt_pass)) {
             Serial.println("MQTT Connected");
             _client -> publish("homeassistant/all", "connected");
             updateState(States::CONNECTED);
@@ -89,10 +92,11 @@ class MqttHandler : public Task
         }
       }
 
-      void subscribe(const char *topic){
+      void subscribe(const char *topic, std::function<void (char *, uint8_t *, unsigned int)> callbackFunction){
         if (_mainState == States::CONNECTED){
-          Serial.print("->"); Serial.println(topic);
+          
           _client -> subscribe(topic);
+          Serial.print("subscribed -> "); Serial.println(topic);
         }
       }
 
@@ -103,6 +107,7 @@ private:
   WiFiClient _espClient;
   PubSubClient* _client;
   Callback _callback = nullptr;
+  String _clientId = "";
 
   const char* mqtt_server = "192.168.0.125";
   const char* mqtt_user = "homeassistant";
@@ -116,17 +121,6 @@ private:
     _mainState = state;
     delay(50);
     _callback(state);
-  }
-
-  void callbackMqtt(char* topic, byte* payload, unsigned int length)
-  {
-   Serial.print("Message arrived [");
-   Serial.print(topic);
-   Serial.print("] ");
-   for (int i=0;i<length;i++) {
-     Serial.print((char)payload[i]);
-   }
-   Serial.println();
   }
 
 };

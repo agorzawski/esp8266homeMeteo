@@ -43,7 +43,7 @@ class I2cDataCollector : public Task
     {
          if ((millis() - _millisOnLastCheck) > 1000)
          {
-              double T,P;
+              double T,P,tempPressure;
               char result = _temperaturePressure.startMeasurment();
               if(result != 0)
               {
@@ -55,10 +55,10 @@ class I2cDataCollector : public Task
                           {
                             _data -> updateData(_bufferIdTemp, T);
                             delay(20);
-                            float tempPressure =  getNormalizedPressure(P, 406);
+                            tempPressure =  getNormalizedPressure(P, 406);
                             _data -> updateData(_bufferIdPressure, tempPressure);
                           }
-                          
+
                           if ((millis() - _millisOnLastPublish) > 30000)
                           {
                             snprintf (_msg, 75, "{\"t\":%.2f, \"p\": %.1f}", T, tempPressure);
@@ -72,7 +72,7 @@ class I2cDataCollector : public Task
               if (_data != NULL)
               {
                 _data -> updateData(_bufferIdLux, lux);
-                //Serial.print("lux : ");Serial.print(lux, 2); Serial.printf("\n");
+                Serial.print("lux : ");Serial.print(lux, 2); Serial.printf("\n");
               }
               _millisOnLastCheck = millis();
          }
@@ -89,5 +89,5 @@ class I2cDataCollector : public Task
         long _millisOnLastPublish = 0;
         MqttHandler* _mqttHandler = NULL;
         char* _mqttTopic = "home/test";
-        char _msg[50];
+        char _msg[75];
 };

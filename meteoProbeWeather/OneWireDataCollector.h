@@ -37,7 +37,7 @@ class OneWireDataCollector : public Task
 
       virtual void run()
       {
-         if (millis() - _millisOnLastCheck > 900)
+         if (millis() - _millisOnLastCheck > 2000)
          {
              _sensors.requestTemperatures();
              for (int i = 0; i < SENSORS_NB; i++)
@@ -48,6 +48,7 @@ class OneWireDataCollector : public Task
                     logPrintf("[OneWire] Temperature [%d] is disconnected.\n", i+1);
                     continue;
                   }
+                  logPrintf("[OneWire] Temperature [%.1f] [stC].\n", temp);
                   if (_data != NULL)
                   {
                     _data -> updateData(_bufferId[i], temp);

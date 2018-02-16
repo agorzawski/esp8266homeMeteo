@@ -28,7 +28,7 @@ class TimerOnChannel
     void subscribe()
     {
       Serial.print("Subscribing for -> "); Serial.println(_mqttTopicSub);
-      _mqttHandler -> subscribe(_mqttTopicSub);
+     //_mqttHandler -> subscribe(_mqttTopicSub, callbackMqtt);
     }
 
     void setOn()
@@ -155,6 +155,17 @@ class TimerOnChannel
     char* _mqttTopic = "test";
     char* _mqttTopicSub = "test/set";
     boolean _isOn = false;
+
+    void callbackMqtt(char* topic, byte* payload, unsigned int length)
+    {
+     Serial.print("Message arrived [");
+     Serial.print(topic);
+     Serial.print("] ");
+     for (int i=0;i<length;i++) {
+       Serial.print((char)payload[i]);
+     }
+     Serial.println();
+    }
 
     static int getNbOfHours(long timeInMillis)
     {

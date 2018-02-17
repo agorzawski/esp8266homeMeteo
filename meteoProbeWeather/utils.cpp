@@ -3,6 +3,8 @@
  *
  *  Created on: 04.01.2017
  *      Author: Bartosz Bielawski
+ *  Update Feb 2018
+ *      Author: Arek Gorzawski
  */
 #include <time.h>
 #include <stdio.h>
@@ -113,6 +115,17 @@ void sendWSPacket(uint8_t header, uint16_t size, const uint8_t* key, const char*
   }
 }
 
+char* toCharArray(const char* format, ...)
+{
+  char* localBuffer = new char[96];
+  va_list argList;
+  va_start(argList, format);
+  vsnprintf(localBuffer, sizeof(localBuffer), format, argList);
+  va_end(argList);
+  //Serial.printf("Prepared - ");
+  Serial.println(localBuffer);
+  return localBuffer;
+}
 
 void logPrintf(char* format, ...)
 {

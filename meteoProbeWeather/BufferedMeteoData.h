@@ -29,7 +29,7 @@ class BufferedMeteoData
         _data.push_back(dataBuffer);
         _units.push_back(label);
 
-        logPrintf("Assigned buffer nb. %d to values [%s]\n", _id, label);
+        logPrintf("Assigned buffer nb. %d to values [%s] for %s", _id, label, sensor);
         return _id++;
     }
 
@@ -75,7 +75,7 @@ class BufferedMeteoData
         {
           for (uint32_t id = 0; id < _id; id++)
           {
-            logPrintf("[time] %d /%d [%s] %d / %d \n", _times[id].getUsed(), BUFFER_SIZE, _units[id], _data[id].getUsed(), BUFFER_SIZE);
+            logPrintf("[time] %d /%d [%s] %d / %d", _times[id].getUsed(), BUFFER_SIZE, _units[id], _data[id].getUsed(), BUFFER_SIZE);
           }
         }
     }

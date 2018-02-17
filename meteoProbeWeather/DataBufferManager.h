@@ -81,13 +81,13 @@ class DataBufferManager : public Task
       virtual void run()
       {
         sleep(60_s);
-        logPrintf(" 1mins  agregation start...\n");
+        logPrintf("1mins  agregation start...");
         for (int id = 0; id < 2; id++)
         {
           aggregateLast(id, TIME_TO_AGGREGATE);
           updateTendences(id);
         }
-        logPrintf(" 1mins agregation DONE.\n");
+        logPrintf(" 1mins agregation DONE.");
 
       }
 

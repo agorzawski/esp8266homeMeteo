@@ -1,10 +1,14 @@
 #include "task.hpp"
 using namespace Tasks;
+
 #include "Adafruit_SSD1306.h"
 #include "DataBufferManager.h"
 
 #define ONE_DEC 1
 #define NO_DEC 0
+#define DEFUALT_IDLE_TIME 2000
+#define DEFUALT_STARTUP_TIME 10000
+
 
 class DisplayTask : public Task
 {
@@ -15,45 +19,70 @@ class DisplayTask : public Task
       TEMPERATURE_IN,
       TEMPERATURE_OUT,
       PRESSURE,
-      NONE
+      NONE,
+      STARTUP,
     };
 
     enum class ConfDisplay
     {
       WIFI,
-      TEMPERATURE_PROBES,
-      NONE
+      TEMPERATURE_PROBES
     };
-
 
     DisplayTask(int pin_sda, int pin_scl){
       display.begin();
       display.clearDisplay();
-      Serial.begin(115000);
-    }
-
-    void setMqttStatus(String status){
-        _mqttStatus = status;
     }
 
     virtual void run()
     {
-        _counter++;
-        if (_counter % 5 == 0)
+        if ((millis() - _millisOnLastCheck) > DEFUALT_STARTUP_TIME && _page == DataDisplay::STARTUP)
         {
-          _page = DataDisplay::PRESSURE;
-          _counter = 1;
-        } else {
-          _page = DataDisplay::TEMPERATURE_IN;
+          _page = DataDisplay::NONE;
         }
 
-        sleep(2_s);
-        updateDisplay();
+        if ((millis() - _millisOnLastCheck) < DEFUALT_STARTUP_TIME && _page == DataDisplay::STARTUP)
+        {
+          updateDisplay();
+          return;
+        }
+
+        _page = DataDisplay::NONE;
+
+        if ((millis() - _millisOnLastCheck) > DEFUALT_IDLE_TIME)
+        {
+          _page = DataDisplay::TEMPERATURE_IN;
+          _pageCounter ++;
+        }
+
+        if ((millis() - _millisOnLastCheck) > DEFUALT_IDLE_TIME && _pageCounter > 3)
+        {
+           _page = DataDisplay::PRESSURE;
+           _pageCounter = 0;
+        }
+
+        if (_page != DataDisplay::NONE)
+        {
+          updateDisplay();
+          _millisOnLastCheck = millis();
+          logPrintf("[OLED] Updated and IDLE...");
+        }
     }
 
     void registerBuffersData(DataBufferManager& dataBufferManager)
     {
         _dataBufferManager = &dataBufferManager;
+    }
+
+    void setDeviceName(char* name)
+    {
+      _name = name;
+      _millisOnLastCheck = millis();
+
+    }
+
+    void setMqttStatus(String status){
+        _mqttStatus = status;
     }
 
     void setSSID(String ssid)
@@ -66,20 +95,37 @@ class DisplayTask : public Task
       _ip = ip;
     }
 
-
     void updateDisplay()
     {
+      //TODO get those values from file -> editable from WEB
+
       float temp = _dataBufferManager->getCurrentData(0);
       float tempTendence = _dataBufferManager->getTendence(0);
-
       float pressure = _dataBufferManager->getCurrentData(1);
       float pressureTendence = _dataBufferManager->getTendence(1);
 
       display.clearDisplay();
+
+      if (_page != DataDisplay::STARTUP)
+      {
       updateHeader();
+      }
+
+      if (_page == DataDisplay::STARTUP)
+      {
+        display.setTextSize(2);
+        display.setTextColor(WHITE);
+        display.setCursor(0,15);
+        display.print("STARTING.... ");
+        display.setTextSize(2);
+        display.setCursor(20,35);
+        display.println(_name);
+      }
 
       if (_page == DataDisplay::TEMPERATURE_IN)
       {
+        //FIXME add label get + add label propoer set.
+        //_dataBufferManager->getLabel()
         updateDisplayPage("Indoor", temp, tempTendence , "C", ONE_DEC);
       }
 
@@ -87,28 +133,29 @@ class DisplayTask : public Task
       {
         updateDisplayPage("Pressure", pressure, pressureTendence, "hPa", NO_DEC);
       }
-
       display.display();
     }
 
-
   private:
-    int _counter = 0;
-    DataDisplay _page = DataDisplay::TEMPERATURE_IN;
+
+    DataDisplay _page = DataDisplay::STARTUP;
+    int _pageCounter = 0;
     ConfDisplay _displayWifiConf = ConfDisplay::WIFI;
+
+    DataBufferManager* _dataBufferManager = NULL;
+    Adafruit_SSD1306 display;
+    long _millisOnLastCheck = 0;
     float _temp = 20.1;
     String _ip = "0.0.0.0";
     String _ssid = "'Set me up' IP!";
     String _mqttStatus = "SET-UP";
-    DataBufferManager* _dataBufferManager = NULL;
-    Adafruit_SSD1306 display;
+    const char* _name = "name-not-set";
 
     void updateHeader()
     {
       display.setTextSize(1);
       display.setTextColor(WHITE);
       display.setCursor(0,0);
-
       if (_displayWifiConf == ConfDisplay::WIFI)
       {
         display.print("Wifi: "); display.println(_ssid);
@@ -143,28 +190,28 @@ class DisplayTask : public Task
         // }
     }
 
-    void drawArrow(float tendence, int arbitY)
-    {
-      if (abs(tendence) - 0.015 < 0)  // 1deg / h
-      {
-        display.drawLine(100, arbitY, 120, arbitY, WHITE);
-        display.drawLine(115, arbitY-3, 120, arbitY, WHITE);
-        display.drawLine(115, arbitY+3, 120, arbitY, WHITE);
-      }
-      else{
-        if (tendence > 0 )
-        {
-          display.drawLine(100, arbitY+5, 120, arbitY-5, WHITE);
-          display.drawLine(115, arbitY-6, 120, arbitY-5, WHITE);
-          display.drawLine(117, arbitY+2, 120, arbitY-5, WHITE);
-        }
-        if (tendence < 0 )
-        {
-          display.drawLine(100, arbitY-5, 120, arbitY+5, WHITE);
-          display.drawLine(115, arbitY-2, 120, arbitY+5, WHITE);
-          display.drawLine(117, arbitY+3, 120, arbitY+5, WHITE);
-        }
-      }
-    }
+    // void drawArrow(float tendence, int arbitY)
+    // {
+    //   if (abs(tendence) - 0.015 < 0)  // 1deg / h
+    //   {
+    //     display.drawLine(100, arbitY, 120, arbitY, WHITE);
+    //     display.drawLine(115, arbitY-3, 120, arbitY, WHITE);
+    //     display.drawLine(115, arbitY+3, 120, arbitY, WHITE);
+    //   }
+    //   else{
+    //     if (tendence > 0 )
+    //     {
+    //       display.drawLine(100, arbitY+5, 120, arbitY-5, WHITE);
+    //       display.drawLine(115, arbitY-6, 120, arbitY-5, WHITE);
+    //       display.drawLine(117, arbitY+2, 120, arbitY-5, WHITE);
+    //     }
+    //     if (tendence < 0 )
+    //     {
+    //       display.drawLine(100, arbitY-5, 120, arbitY+5, WHITE);
+    //       display.drawLine(115, arbitY-2, 120, arbitY+5, WHITE);
+    //       display.drawLine(117, arbitY+3, 120, arbitY+5, WHITE);
+    //     }
+    //   }
+    // }
 
 };

@@ -8,6 +8,12 @@
 #include "MqttHandler.h"
 
 #include "task.hpp"
+
+#define DELAY_BETWEEN_REDOUTS_MS 20
+#define DEFAULT_ALT_M 406
+#define DEFUALT_MQTT_PUBLISH_TIME 30000
+#define DEFUALT_PUBLISH_TIME 1000
+
 using namespace Tasks;
 
 class I2cDataCollector : public Task
@@ -20,28 +26,24 @@ class I2cDataCollector : public Task
         _temperaturePressure.setOversampling(4);
     }
 
-    I2cDataCollector(int pin_sda, int pin_scl, DataBufferManager& data)
-    {
-      I2cDataCollector(pin_sda, pin_scl);
-      registerBuffersData(data);
-    }
-
     void setMqttHandler(MqttHandler& mqttHandler, char* topic){
       _mqttHandler = &mqttHandler;
       _mqttTopic = topic;
+      logPrintf("Registred for meteo params on %s", topic);
     }
 
     void registerBuffersData(DataBufferManager& data)
     {
         _data = &data;
-        _bufferIdTemp = _data -> getId( "degC","bmp280");
-        _bufferIdPressure = _data -> getId( "hPa","bmp280");
-        _bufferIdLux = _data -> getId( "lux","max44009");
+        //FIXME get those values from file -> editable from WEB
+        _bufferIdTemp = _data -> getId( "degC","temp");
+        _bufferIdPressure = _data -> getId( "hPa","pressure");
+        _bufferIdLux = _data -> getId( "lux","lumi");
     }
 
     virtual void run()
     {
-         if ((millis() - _millisOnLastCheck) > 1000)
+         if ((millis() - _millisOnLastCheck) > DEFUALT_PUBLISH_TIME)
          {
               double T,P,tempPressure;
               char result = _temperaturePressure.startMeasurment();
@@ -54,27 +56,32 @@ class I2cDataCollector : public Task
                           if (_data != NULL)
                           {
                             _data -> updateData(_bufferIdTemp, T);
-                            delay(20);
-                            tempPressure =  getNormalizedPressure(P, 406);
+                            delay(DELAY_BETWEEN_REDOUTS_MS);
+                            tempPressure =  getNormalizedPressure(P, DEFAULT_ALT_M);
                             _data -> updateData(_bufferIdPressure, tempPressure);
                           }
 
-                          if ((millis() - _millisOnLastPublish) > 30000)
+                          if ((millis() - _millisOnLastPublish) > DEFUALT_MQTT_PUBLISH_TIME)
                           {
                             snprintf (_msg, 75, "{\"t\":%.2f, \"p\": %.1f}", T, tempPressure);
-                            _mqttHandler -> publish(_mqttTopic, _msg);
+                            if (_mqttHandler != NULL)
+                            {
+                              _mqttHandler -> publish(_mqttTopic, _msg);
+                            }
                             _millisOnLastPublish = millis();
                           }
                      }
               }
-              delay(20);
+              delay(DELAY_BETWEEN_REDOUTS_MS);
               float lux = _light.get_lux();
               if (_data != NULL)
               {
+                //FIXME sensor?
                 _data -> updateData(_bufferIdLux, lux);
-                Serial.print("lux : ");Serial.print(lux, 2); Serial.printf("\n");
+                //Serial.print("lux : ");Serial.print(lux, 2); Serial.printf("\n");
               }
               _millisOnLastCheck = millis();
+              logPrintf("[I2C] Went to IDLE, waiting...");
          }
     }
 
@@ -88,6 +95,7 @@ class I2cDataCollector : public Task
         long _millisOnLastCheck = 0;
         long _millisOnLastPublish = 0;
         MqttHandler* _mqttHandler = NULL;
-        char* _mqttTopic = "home/test";
+        float defualtAltitudeForReference = DEFAULT_ALT_M;
+        char* _mqttTopic = NULL;
         char _msg[75];
 };

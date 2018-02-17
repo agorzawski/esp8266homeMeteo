@@ -11,6 +11,7 @@
 #include "DataBufferManager.h"
 #include "MqttHandler.h"
 
+#include "utils.h"
 #include "task.hpp"
 #include "tasks_utils.h"
 
@@ -27,7 +28,6 @@
 
 #define PIN_SPARE_1 16  // D0
 #define PIN_SPARE_2 14  // D5
-
 //#define PIN_SCL 15 -> // D8 -> not connected in board v1
 
 using namespace Tasks;
@@ -72,53 +72,76 @@ WebServerTask webServerTask;
 DisplayTask displayTask(PIN_SDA, PIN_SCL);
 LedBlinker ledBlinker;
 
-TimerOnChannel channel1(PIN_RELAY_1, "Lamp LED");
-TimerOnChannel channel2(PIN_RELAY_2, "Lamp LED");
-TimerOnChannel channel3(PIN_SPARE_1, "Lamp LED");
+TimerOnChannel channel1(PIN_RELAY_1, "OnBoard Relay");
+TimerOnChannel channel2(PIN_RELAY_2, "OnBoard LED");
+TimerOnChannel channel3(PIN_SPARE_1, "ExternalRelay1");
 
 void setup()
 {
   Serial.begin(115200);
+
   if (!SPIFFS.begin())
   {
     SPIFFS.format();
     SPIFFS.begin();
-    writeConfig(F("configPassword"), F("password"));
     logPrintf("Formatting filesystem, the default password is %s", readConfig(F("configPassword")).c_str());
+    writeConfig(F("configPassword"), F("password"));
   }
 
-  // data suppliers
-  tempPressureCollector.registerBuffersData(dataBufferManager);
-  //  tempCollector.registerBuffersData(dataBufferManager);
+  //TODO in to the file
+  char* boardName = "Sonda3";
+  char* boardSysName = "sensor3";
 
-  //data consumers
+  logPrintf("[%s/%s] INITIALIZATION STARTED", boardName, boardSysName);
+  String macAddress = WiFi.macAddress();
+  logPrintf("[MAC Address] %s", macAddress.c_str());
+
+  /* mqtt handler */
+  //TODO in to the file
+  char* mqtt_server = "192.168.0.125";
+  int mqtt_port = 1883;
+  char* mqtt_user = "homeassistant";
+  char* mqtt_pass = "homeassistant123";
+  mqttHandler.setConfiguration(mqtt_server, mqtt_port, mqtt_user, mqtt_pass);
+
+  /* data suppliers */
+  tempPressureCollector.registerBuffersData(dataBufferManager);
+  // tempCollector.registerBuffersData(dataBufferManager);
+  /* data consumers */
   webServerTask.registerBuffersData(dataBufferManager);
   displayTask.registerBuffersData(dataBufferManager);
+  displayTask.setDeviceName(boardName);
 
-  // outside wold communication!
-  channel1.setMqttHandler(mqttHandler, "home/meteolamp3/channel1");
-  channel2.setMqttHandler(mqttHandler, "home/meteolamp3/channel2");
-  channel3.setMqttHandler(mqttHandler, "home/meteolamp3/channel3");
+  // // // outside wold communication!
+  // channel1.setMqttHandler(mqttHandler, toCharArray("home/%s/relay1", boardSysName)); // on board relay
+  // //channel2.setMqttHandler(mqttHandler, "home/sensor3/relay2"); // only local usavge
+  // channel3.setMqttHandler(mqttHandler, toCharArray("home/%s/relay3", boardSysName)); // ext board relay 1
+  // tempPressureCollector.setMqttHandler(mqttHandler, toCharArray("home/%s", boardSysName));
+  // tempCollector.setMqttHandler(mqttHandler, toCharArray("home/%sb", boardSysName));
+
+  channel1.setMqttHandler(mqttHandler, "home/sensor3/relay1"); // on board relay
+  //channel2.setMqttHandler(mqttHandler, "home/sensor3/relay2"); // only local usavge
+  channel3.setMqttHandler(mqttHandler, "home/sensor3/relay3"); // ext board relay 1
   tempPressureCollector.setMqttHandler(mqttHandler, "home/sensor3");
+  tempCollector.setMqttHandler(mqttHandler,"home/sensor3b");
 
-  //these tasks are always running
+  /* #############
+   TASKS
+  these tasks are always running */
   addTask(&ledBlinker);
   addTask(&dataBufferManager);
   addTask(&wifiConnector);
   addTask(&tempPressureCollector);
   addTask(&tempCollector);
   addTask(&displayTask);
-  //and these need to be suspended at the start
+  /* and these need to be suspended at the start */
   addTask(&webServerTask);
-  addTask(&mqttHandler);
-
   webServerTask.suspend();
+  addTask(&mqttHandler);
   mqttHandler.suspend();
-  setupTasks();
 
-  String macAddress = WiFi.macAddress();
-  IPAddress ip = WiFi.localIP();
-  logPrintf("MAC Address: %s", macAddress.c_str());
+  logPrintf("[%s/%s] INITIALIZATION DONE! ", boardName, boardSysName);
+  setupTasks();
 }
 
 void loop()
@@ -137,11 +160,6 @@ void connectionMqttStateChanged(MqttHandler::States state){
     case MqttHandler::States::CONNECTED:
     {
       displayTask.setMqttStatus("CONN");
-      //channel1.subscribe();
-      //channel2.subscribe();
-      //channel3.subscribe();
-
-      channel1.setOn();
       channel2.setOn();
       channel3.setOn();
       break;
@@ -149,10 +167,8 @@ void connectionMqttStateChanged(MqttHandler::States state){
     case MqttHandler::States::WAITING:
     {
       displayTask.setMqttStatus("WAIT");
-      channel1.setOff();
       channel2.setOff();
       channel3.setOff();
-
       break;
     }
   }
@@ -172,7 +188,7 @@ void connectionStateChanged(WifiConnector::States state)
       webServerTask.resume();
       //TODO manage the essid and pwd for first connection!
       String ip = WiFi.softAPIP().toString();
-      logPrintf("IP = %s", ip.c_str());
+      logPrintf("[AP IP] = %s", ip.c_str());
       displayTask.setIP(ip);
       displayTask.setSSID(WiFi.SSID());
       return;
@@ -183,9 +199,10 @@ void connectionStateChanged(WifiConnector::States state)
       webServerTask.reset();
       webServerTask.resume();
       String ip = WiFi.localIP().toString();
-      logPrintf("IP = %s", ip.c_str());
+      logPrintf("[Board IP] = %s", ip.c_str());
       displayTask.setIP(ip);
       displayTask.setSSID(WiFi.SSID());
+
       mqttHandler.reset();
       mqttHandler.resume();
       break;

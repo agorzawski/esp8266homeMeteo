@@ -22,7 +22,9 @@ class TimerOnChannel
     {
       _mqttHandler = &mqttHandler;
       _mqttTopic = topic;
-      sprintf(_mqttTopicSub,"%s/%s", topic, "set");
+      _mqttTopicSub = toCharArray("%s/%s", topic, "set");
+      logPrintf("[%s] Publishing for %s", _label.c_str(), _mqttTopic);
+      logPrintf("[%s] Listening for %s", _label.c_str(), _mqttTopicSub);
     }
 
     void subscribe()
@@ -35,7 +37,10 @@ class TimerOnChannel
     {
       _manual = true;
       digitalWrite(_pin, HIGH);
-      _mqttHandler->publish(_mqttTopic, "ON");
+      if (_mqttHandler != NULL)
+      {
+        _mqttHandler -> publish(_mqttTopic, "ON");
+      }
       _isOn = true;
     }
 
@@ -43,7 +48,10 @@ class TimerOnChannel
     {
       _manual = true;
       digitalWrite(_pin, LOW);
-      _mqttHandler->publish(_mqttTopic, "OFF");
+      if (_mqttHandler != NULL)
+      {
+        _mqttHandler -> publish(_mqttTopic, "OFF");
+      }
       _isOn = false;
     }
 
@@ -152,8 +160,8 @@ class TimerOnChannel
     String _label = "Lights";
     boolean _manual = false;
     MqttHandler* _mqttHandler = NULL;
-    char* _mqttTopic = "test";
-    char* _mqttTopicSub = "test/set";
+    char* _mqttTopic = NULL;
+    char* _mqttTopicSub = NULL;
     boolean _isOn = false;
 
     void callbackMqtt(char* topic, byte* payload, unsigned int length)

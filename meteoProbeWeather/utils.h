@@ -3,6 +3,8 @@
  *
  *  Created on: 28.12.2016
  *      Author: Bartosz Bielawski
+ *  Update Feb 2018
+ *      Author: Arek Gorzawski
  */
 
 #ifndef UTILS_H_
@@ -25,6 +27,7 @@ class Client;
 void sendWSPacket_P(uint8_t header, uint16_t size, const uint8_t* key, PGM_P payload, Client* client);
 void sendWSPacket(uint8_t header, uint16_t size, const uint8_t* key, const char* payload, Client* client);
 
+char* toCharArray(const char* format, ...);
 void logPrintf(char* format, ...);
 
 class __FlashStringHelper;

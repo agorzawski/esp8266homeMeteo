@@ -4,5 +4,5 @@
 .gcc-flags.json
 *.cpp.o
 config.txt
-.pio/*
+.pio
 meteoDisplay/*

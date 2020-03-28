@@ -1,0 +1,14 @@
+# GENERAL SETTINGS
+essid=[wifi SSID]
+wifiPassword=[password]
+timezone=3600
+
+# MQTT SETTINGS
+mqttEnabled=1
+mqttServer=[IP or name]
+mqttUser=[name]
+mqttPassword=[mqttPassword]
+
+
+# LED Blinker
+ledEnabled=1

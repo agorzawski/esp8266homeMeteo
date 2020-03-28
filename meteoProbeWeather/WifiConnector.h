@@ -16,6 +16,7 @@
 #include "task.hpp"
 #include "utils.h"
 
+#include <DataStore.h>
 class WifiConnector: public Tasks::TaskCRTP<WifiConnector>
 {
   public:
@@ -57,14 +58,13 @@ class WifiConnector: public Tasks::TaskCRTP<WifiConnector>
       WiFi.disconnect();
       WiFi.mode(WIFI_STA);
 
-//      String pwd   = readConfig("wifiPassword");
-      String pwd   = "Cern0wiec";
+      auto pwd   =  DataStore::value(F("wifiPassword"));
 
       logPrintf("Running in CLIENT mode...");
       logPrintf("Connecting to %s - %s", essid.c_str(), pwd.c_str());
 
       WiFi.begin(essid.c_str(), pwd.c_str());
-      nextState = &WifiConnector::monitorClientStatus;      
+      nextState = &WifiConnector::monitorClientStatus;
     }
 
     void lateInit()
@@ -73,8 +73,7 @@ class WifiConnector: public Tasks::TaskCRTP<WifiConnector>
       if (callback)
         callback(States::NONE);
 
-//      auto essid = readConfig("essid");
-      String essid = "a_r_o_2";
+      auto essid = DataStore::value(F("essid"));
 
       if (essid.length() == 0)
         mainState = States::AP;

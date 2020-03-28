@@ -2,3 +2,7 @@
 .piolibdeps
 .clang_complete
 .gcc-flags.json
+*.cpp.o
+config.txt
+.pio/*
+meteoDisplay/*

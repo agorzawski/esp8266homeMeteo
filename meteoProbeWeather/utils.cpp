@@ -5,15 +5,25 @@
  *      Author: Bartosz Bielawski
  *  Update Feb 2018
  *      Author: Arek Gorzawski
+ *  Update March 2020
+ *      Author: Bartosz Bielawski
+ *      Author: Arek Gorzawski
  */
 #include <time.h>
 #include <stdio.h>
+#include <FS.h>
+
+#include <vector>
+#include <memory>
+#include <utility>
 
 #include "utils.h"
 #include "config.h"
 #include "Client.h"
 #include "Arduino.h"
-#include "FS.h"
+//#include "FS.h"
+
+#include "DataStore.h"
 
 extern "C" {
 #include "user_interface.h"
@@ -149,16 +159,76 @@ void logPrintf(const __FlashStringHelper* format, ...)
   va_end(argList);
 }
 
+void logPrintfX(const String& app, const String& format, ...)
+{
+	char localBuffer[256];
+	String a(app);
+	va_list argList;
+	va_start(argList, format);
+	uint32_t bytes = snprintf(localBuffer, sizeof(localBuffer), "%s - %s: ", getDateTime(), a.c_str());
+	vsnprintf(localBuffer+bytes, sizeof(localBuffer)-bytes, format.c_str(), argList);
+	Serial.println(localBuffer);
+
+	//syslogSend(app, localBuffer+bytes);
+
+	va_end(argList);
+}
 
 bool checkFileSystem()
 {
   bool alreadyFormatted = SPIFFS.begin();
   if (not alreadyFormatted)
     SPIFFS.format();
-
   SPIFFS.end();
   return alreadyFormatted;
 }
+
+String readLine(fs::File& file)
+{
+	String result;
+
+	while (file.available())
+	{
+		int c = file.read();
+		if (c == '\n')
+			return result;
+
+		if (c == '\r')
+			return result;
+
+		//cast it, otherwise a number is appended - not a char
+		result += (char)c;
+	}
+
+	return result;
+}
+
+std::pair<String, String> splitLine(String&& line)
+{
+    std::pair<String, String> result;
+
+    line.trim();
+
+    if (line.length() == 0)
+        return result;
+
+    if (line[0] == '#')
+        return result;
+
+    auto pos = line.indexOf('=');   //find the first character
+
+    if (pos == -1)
+    {
+        result.first = line;
+        return result;
+    }
+
+    result.first = line.substring(0, pos);
+    line.remove(0, pos+1);          //remove the equal sign as well
+    result.second = line;
+    return result;
+}
+
 
 String readConfig(const String& name)
 {
@@ -172,6 +242,36 @@ void writeConfig(const String& name, const String& value)
   auto f = SPIFFS.open(String(F("/config/")) +name, "w+");
   f.print(value);
   f.print('\n');
+}
+
+
+void readConfigFromFS()
+{
+    logPrintfX("UTL", F("Reading configuration values from the flash..."));
+    //the FS has to be initialized already...
+	SPIFFS.begin();
+    auto file = SPIFFS.open("/config.txt", "r");
+    if (!file)
+	{
+		logPrintfX(F("UTL"), F("The file is missing, please create your own config using the web interface!"));
+		return;
+	}
+
+	logPrintfX(F("UTL"), "File size: %zu", file.size());
+
+	//remove all the data that's already present
+	DataStore::clear();
+
+    while (file.available())
+    {
+	    auto p = splitLine(readLine(file));
+        if (not p.second.length())
+            continue;
+
+        logPrintfX("UTL", F("Config: %s = %s"), p.first.c_str(), p.second.c_str());
+		DataStore::value(p.first) = p.second;
+    }
+	SPIFFS.end();
 }
 
 

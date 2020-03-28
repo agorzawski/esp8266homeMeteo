@@ -5,14 +5,18 @@
 #define MqttHandler_h
 
 #include <PubSubClient.h>
+#include <string>
 #include "task.hpp"
 #include <SPI.h>
 #include "ESP8266WiFi.h"
+#include <DataStore.h>
 
 #define DEFAULT_STATE_PUBLISH_MS 30000
 #define DEFAULT_WAITING_MS 60000
 #define DEFUALT_RECONNECT_TIME 2500
 #define DEFAULT_STATE_UPDATE_DELAY 20
+
+#define DEFAULT_MQTT_PORT 1883
 
 using namespace Tasks;
 class MqttHandler : public Task
@@ -28,31 +32,14 @@ class MqttHandler : public Task
      };
      using Callback = void (*)(States state); //main function callback
 
-     MqttHandler(Callback callback): _callback(callback)
+     MqttHandler(Callback callback):
+            _callback(callback)
      {
-
-     }
-
-     void setConfiguration(char* mqtt_server, int mqtt_port, char* mqtt_user, char* mqtt_pass)
-     {
-       _mqtt_server = mqtt_server;
-       _mqtt_port = mqtt_port;
-       _mqtt_user = mqtt_user;
-       _mqtt_pass = mqtt_pass;
-       Serial.println(_mqtt_server);
-       logPrintf("[MQTT] %s:%d for %s:%s", _mqtt_server, _mqtt_port, _mqtt_user, _mqtt_pass );
-       _mainState = States::CONFIGURED;
+       _client = new PubSubClient(_espClient);
      }
 
      virtual void run()
       {
-        if (_mainState == States::CONFIGURED)
-        {
-          _client = new PubSubClient(_espClient);
-          _client -> setServer(_mqtt_server, _mqtt_port);
-         //_client -> setCallback(callbackFunction);
-         _mainState = States::IDLE;
-        }
 
         if (!_client -> connected() && _mainState == States::IDLE)
         {
@@ -64,12 +51,6 @@ class MqttHandler : public Task
         }
 
         long now = millis();
-        if (now - lastMsg > DEFAULT_STATE_PUBLISH_MS && _mainState == States::CONNECTED)
-        {
-          ++value;
-          snprintf(msg, 75, "hello #%ld", value);
-          _client -> publish("home/status", msg);
-        }
 
         if (now - lastMsg > DEFAULT_WAITING_MS && _mainState == States::WAITING)
         {
@@ -80,6 +61,16 @@ class MqttHandler : public Task
       }
 
       void reconnectMqttServer() {
+        _client -> disconnect();
+        auto _mqtt_server = DataStore::value(F("mqttServer"));
+        auto _mqtt_user = DataStore::value(F("mqttUser"));
+        auto _mqtt_pass = DataStore::value(F("mqttPassword"));
+        logPrintfX(F("[MQTT]"), "Connecting (%s, %s)", _mqtt_server.c_str(), _mqtt_user.c_str());
+        _client -> setServer(_mqtt_server.c_str(), DEFAULT_MQTT_PORT);
+        _client -> unsubscribe("home/");
+        _client -> subscribe("home/");
+        //_client -> setCallback(callbackMqtt);
+
         int index = 0;
         while (!_client->connected()) {
           logPrintf("[MQTT] Attempting connection...");
@@ -88,7 +79,8 @@ class MqttHandler : public Task
             _clientId = "MeteoProbe-";
             _clientId += String(random(0xffff), HEX);
           }
-          if (_client -> connect(_clientId.c_str(), _mqtt_user, _mqtt_pass))
+
+          if (_client -> connect(_clientId.c_str(), _mqtt_user.c_str(), _mqtt_pass.c_str()))
           {
             logPrintf("[MQTT] Connected");
             updateState(States::CONNECTED);
@@ -97,8 +89,8 @@ class MqttHandler : public Task
           else
           {
             updateState(States::WAITING);
-            logPrintf("[MQTT] connection failed, rc=%d try again in 2 seconds", _client->state());
-            delay(DEFUALT_RECONNECT_TIME);
+            logPrintf("[MQTT] connection failed, rc=%d try again in 5 seconds", _client->state());
+            sleep(5_s);
             index++;
             if (index == 2){
               updateState(States::WAITING);
@@ -111,6 +103,15 @@ class MqttHandler : public Task
       PubSubClient* getHandler()
       {
         return _client;
+      }
+
+      boolean isConnected()
+      {
+        if (_mainState == States::CONNECTED)
+        {
+          return true;
+        }
+        return false;
       }
 
       void publish(const char *topic, const char *payload){
@@ -131,17 +132,11 @@ class MqttHandler : public Task
 
 private:
 
-  States _mainState = States::NOT_CONFIGURED;
   WiFiClient _espClient;
   PubSubClient* _client;
   Callback _callback = nullptr;
   String _clientId = "";
-
-  const char* _mqtt_server = "srv-name-not-set";
-  int _mqtt_port = 0;
-  const char* _mqtt_user = "user-not-set";
-  const char* _mqtt_pass = "pass-not-set";
-
+  States _mainState = States::IDLE;
   long lastMsg = 0;
   char msg[50];
   int value = 0;
@@ -151,5 +146,17 @@ private:
     delay(DEFAULT_STATE_UPDATE_DELAY);
     _callback(state);
   }
+
+  void callbackMqtt(char* topic, byte* payload, unsigned int length)
+  {
+   Serial.print("Message arrived [");
+   Serial.print(topic);
+   Serial.print("] ");
+   for (int i=0;i<length;i++) {
+     Serial.print((char)payload[i]);
+   }
+   Serial.println();
+  }
+
 };
 #endif

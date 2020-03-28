@@ -13,6 +13,9 @@
 #include <string>
 #include "pgmspace.h"
 
+extern int32_t timezone;
+
+
 int operator"" _s(long double seconds);
 int operator"" _s(unsigned long long int seconds);
 
@@ -29,6 +32,7 @@ void sendWSPacket(uint8_t header, uint16_t size, const uint8_t* key, const char*
 
 char* toCharArray(const char* format, ...);
 void logPrintf(char* format, ...);
+void logPrintfX(const String& app, const String& format, ...);
 
 class __FlashStringHelper;
 
@@ -42,9 +46,18 @@ T min(T a, T b)
 
 class String;
 
+void readConfigFromFS();
 bool checkFileSystem();
 String readConfig(const String& name);
 void   writeConfig(const String& name, const String& value);
+
+namespace fs
+{
+	class File;
+};
+
+String readLine(fs::File& file);
+std::vector<String> tokenize(const String& s);
 
 int32_t getTimeZone();
 

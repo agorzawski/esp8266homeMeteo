@@ -80,50 +80,32 @@ void setup()
 {
   Serial.begin(115200);
 
-  if (!SPIFFS.begin())
-  {
-    SPIFFS.format();
-    SPIFFS.begin();
-    logPrintf("Formatting filesystem, the default password is %s", readConfig(F("configPassword")).c_str());
-    writeConfig(F("configPassword"), F("password"));
-  }
+  checkFileSystem();
+	readConfigFromFS();
 
   //TODO in to the file
-  char* boardName = "Sonda3";
-  char* boardSysName = "sensor3";
+  char* firmwareVersion = "0.2.0";
+  char* boardName = "Sonda2";
+  char* boardSysName = "sensor2";
 
   logPrintf("[%s/%s] INITIALIZATION STARTED", boardName, boardSysName);
   String macAddress = WiFi.macAddress();
   logPrintf("[MAC Address] %s", macAddress.c_str());
 
-  /* mqtt handler */
-  //TODO in to the file
-  char* mqtt_server = "192.168.0.125";
-  int mqtt_port = 1883;
-  char* mqtt_user = "homeassistant";
-  char* mqtt_pass = "homeassistant123";
-  mqttHandler.setConfiguration(mqtt_server, mqtt_port, mqtt_user, mqtt_pass);
-
   /* data suppliers */
   tempPressureCollector.registerBuffersData(dataBufferManager);
-  // tempCollector.registerBuffersData(dataBufferManager);
+  tempCollector.registerBuffersData(dataBufferManager);
   /* data consumers */
   webServerTask.registerBuffersData(dataBufferManager);
   displayTask.registerBuffersData(dataBufferManager);
   displayTask.setDeviceName(boardName);
+  displayTask.setFirmwareVersion(firmwareVersion);
 
   // // // outside wold communication!
-  // channel1.setMqttHandler(mqttHandler, toCharArray("home/%s/relay1", boardSysName)); // on board relay
-  // //channel2.setMqttHandler(mqttHandler, "home/sensor3/relay2"); // only local usavge
-  // channel3.setMqttHandler(mqttHandler, toCharArray("home/%s/relay3", boardSysName)); // ext board relay 1
-  // tempPressureCollector.setMqttHandler(mqttHandler, toCharArray("home/%s", boardSysName));
-  // tempCollector.setMqttHandler(mqttHandler, toCharArray("home/%sb", boardSysName));
-
-  channel1.setMqttHandler(mqttHandler, "home/sensor3/relay1"); // on board relay
-  //channel2.setMqttHandler(mqttHandler, "home/sensor3/relay2"); // only local usavge
-  channel3.setMqttHandler(mqttHandler, "home/sensor3/relay3"); // ext board relay 1
-  tempPressureCollector.setMqttHandler(mqttHandler, "home/sensor3");
-  tempCollector.setMqttHandler(mqttHandler,"home/sensor3b");
+  //TOD build these strings from boardSysName
+  channel1.setMqttHandler(mqttHandler, "home/sensor2/relay1"); // on board relay
+  tempPressureCollector.setMqttHandler(mqttHandler, "home/sensor2");
+  tempCollector.setMqttHandler(mqttHandler,"home/sensor2/onewire");
 
   /* #############
    TASKS

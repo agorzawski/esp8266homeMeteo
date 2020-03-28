@@ -81,6 +81,10 @@ class DisplayTask : public Task
 
     }
 
+    void setFirmwareVersion(char* ver){
+        _ver = ver;
+    }
+
     void setMqttStatus(String status){
         _mqttStatus = status;
     }
@@ -113,20 +117,27 @@ class DisplayTask : public Task
 
       if (_page == DataDisplay::STARTUP)
       {
-        display.setTextSize(2);
         display.setTextColor(WHITE);
-        display.setCursor(0,15);
-        display.print("STARTING.... ");
+        display.setTextSize(1);
+        display.setCursor(3,2);
+        display.println("MeteoHomeStation");
         display.setTextSize(2);
-        display.setCursor(20,35);
-        display.println(_name);
+        display.setCursor(15,20);
+        display.print(">");
+
+        display.print(_name);
+        display.println("<");
+        display.setTextSize(1);
+        display.setCursor(30,55);
+        display.print("ver. ");
+        display.println(_ver);
       }
 
       if (_page == DataDisplay::TEMPERATURE_IN)
       {
         //FIXME add label get + add label propoer set.
         //_dataBufferManager->getLabel()
-        updateDisplayPage("Indoor", temp, tempTendence , "C", ONE_DEC);
+        updateDisplayPage("Temp", temp, tempTendence , "C", ONE_DEC);
       }
 
       if (_page == DataDisplay::PRESSURE)
@@ -150,6 +161,7 @@ class DisplayTask : public Task
     String _ssid = "'Set me up' IP!";
     String _mqttStatus = "SET-UP";
     const char* _name = "name-not-set";
+    const char* _ver = "ver-not-set";
 
     void updateHeader()
     {
@@ -171,47 +183,47 @@ class DisplayTask : public Task
         display.setCursor(0,18);
         display.print(desc);
 
-        display.setCursor(10,39);
+        display.setCursor(5,39);
         display.setTextSize(3);
         display.setTextColor(WHITE);
         display.print(value, decimalDigit);
-        display.setTextSize(2);
+        display.setTextSize(1);
         display.print(unit);
 
-        // if (abs(tendence) - 0.015 > 0 )
-        // {
-        //   display.setCursor(98,10);
-        //   display.setTextSize(1);
-        //   display.setTextColor(WHITE);
-        //   display.print(tendence, decimalDigit);
-        //   display.setCursor(98,30);
-        //   display.print(_dataBufferManager -> getActualTendenceLabel());
-        //   drawArrow(tendence, 24);
-        // }
+        if (abs(tendence) - 0.015 > 0 )
+        {
+          display.setCursor(98,15);
+          display.setTextSize(1);
+          display.setTextColor(WHITE);
+          display.print(tendence, decimalDigit);
+          display.setCursor(98,34);
+          display.print(_dataBufferManager -> getActualTendenceLabel());
+          drawArrow(tendence, 24);
+        }
     }
 
-    // void drawArrow(float tendence, int arbitY)
-    // {
-    //   if (abs(tendence) - 0.015 < 0)  // 1deg / h
-    //   {
-    //     display.drawLine(100, arbitY, 120, arbitY, WHITE);
-    //     display.drawLine(115, arbitY-3, 120, arbitY, WHITE);
-    //     display.drawLine(115, arbitY+3, 120, arbitY, WHITE);
-    //   }
-    //   else{
-    //     if (tendence > 0 )
-    //     {
-    //       display.drawLine(100, arbitY+5, 120, arbitY-5, WHITE);
-    //       display.drawLine(115, arbitY-6, 120, arbitY-5, WHITE);
-    //       display.drawLine(117, arbitY+2, 120, arbitY-5, WHITE);
-    //     }
-    //     if (tendence < 0 )
-    //     {
-    //       display.drawLine(100, arbitY-5, 120, arbitY+5, WHITE);
-    //       display.drawLine(115, arbitY-2, 120, arbitY+5, WHITE);
-    //       display.drawLine(117, arbitY+3, 120, arbitY+5, WHITE);
-    //     }
-    //   }
-    // }
+    void drawArrow(float tendence, int arbitY)
+    {
+      if (abs(tendence) - 0.015 < 0)  // 1deg / h
+      {
+        display.drawLine(100, arbitY, 120, arbitY, WHITE);
+        display.drawLine(115, arbitY-3, 120, arbitY, WHITE);
+        display.drawLine(115, arbitY+3, 120, arbitY, WHITE);
+      }
+      else{
+        if (tendence > 0 )
+        {
+          display.drawLine(100, arbitY+5, 120, arbitY-5, WHITE);
+          display.drawLine(115, arbitY-6, 120, arbitY-5, WHITE);
+          display.drawLine(117, arbitY+2, 120, arbitY-5, WHITE);
+        }
+        if (tendence < 0 )
+        {
+          display.drawLine(100, arbitY-5, 120, arbitY+5, WHITE);
+          display.drawLine(115, arbitY-2, 120, arbitY+5, WHITE);
+          display.drawLine(117, arbitY+3, 120, arbitY+5, WHITE);
+        }
+      }
+    }
 
 };

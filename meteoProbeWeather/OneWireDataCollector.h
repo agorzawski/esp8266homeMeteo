@@ -12,22 +12,28 @@
 #define ONEWIRE_READ_ATTEMPT 3000
 #define ONEWIRE_HARDWARE_DISCONNECTED -127.0
 
+#define DEFUALT_MQTT_PUBLISH_TIME 30000
+#define DEFUALT_PUBLISH_TIME 1000
+
 using namespace Tasks;
 class OneWireDataCollector : public Task
 {
- public:
-   enum class State
-   {
-     IDLE,
-     REQUESTED,
-     READY
-   };
+  public:
+     enum class State
+     {
+       IDLE,
+       REQUESTED,
+       READY
+     };
 
       OneWireDataCollector(int bus)
       {
          OneWire _oneWire(bus);
          _sensors = DallasTemperature(&_oneWire);
          _sensors.begin();
+         _sensors.setWaitForConversion(false);
+         _sensors.requestTemperatures();
+         sleep(10_s);
       }
 
       void registerBuffersData(DataBufferManager& data)
@@ -47,23 +53,9 @@ class OneWireDataCollector : public Task
 
       virtual void run()
       {
-         long now = millis();
-         if (now - _millisOnLastCheck > ONEWIRE_READ_ATTEMPT &&  _state == State::IDLE)
-         {
-             _sensors.requestTemperatures();
-             _millisOnLastCheck = millis();
-             delay(ONEWIRE_WAIT_AFTER_READOUT_MS);
-             _state = State::REQUESTED;
-         }
-
-         if (now - _millisOnLastCheck > ONEWIRE_WAIT_AFTER_READOUT_MS &&  _state == State::REQUESTED)
-         {
-             _state = State::READY;
-         }
-
-        if (_state == State::READY)
-        {
-          for (int i = 0; i < SENSORS_NB; i++)
+        long now = millis();
+        _state = State::READY;
+        for (int i = 0; i < SENSORS_NB; i++)
           {
                float temp = _sensors.getTempCByIndex(i);
                if (temp == ONEWIRE_HARDWARE_DISCONNECTED)
@@ -76,21 +68,31 @@ class OneWireDataCollector : public Task
                {
                  _data -> updateData(_bufferId[i], temp);
                }
+               if (_data != NULL && (millis() - _millisOnLastPublish) > DEFUALT_MQTT_PUBLISH_TIME)
+               {
+                 snprintf (_msg, 75, "{\"t\":%.2f}", temp);
+                 if (_mqttHandler != NULL)
+                 {
+                   _mqttHandler -> publish(_mqttTopic, _msg);
+                 }
+                 _millisOnLastPublish = millis();
+               }
            }
            _millisOnLastCheck = now;
            _state = State::IDLE;
+           _sensors.requestTemperatures();
            logPrintf("[OneWire] Went to IDLE, waiting...");
-        }
+           sleep(10_s);
       }
 
 private:
     DallasTemperature _sensors;
     MqttHandler* _mqttHandler = NULL;
     DataBufferManager* _data = NULL;
-    State _state = State::IDLE;
-
+    State _state = State::READY;
     uint32_t _bufferId[SENSORS_NB];
     long _millisOnLastCheck = 0;
+    long _millisOnLastPublish = 0;
     char* _mqttTopic = "home/test";
     char _msg[75];
 };

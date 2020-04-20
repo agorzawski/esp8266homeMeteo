@@ -29,7 +29,7 @@ class OneWireDataCollector : public Task
       OneWireDataCollector(int bus):
         _oneWire(bus),
         _sensors(&_oneWire)
-      {        
+      {
          //_sensors = DallasTemperature(&_oneWire);
          _sensors.begin();
          _sensors.setWaitForConversion(false);
@@ -72,7 +72,7 @@ class OneWireDataCollector : public Task
                }
                if (_data != NULL && (millis() - _millisOnLastPublish) > DEFUALT_MQTT_PUBLISH_TIME)
                {
-                 snprintf (_msg, 75, "{\"t\":%.2f}", temp);
+                 snprintf (_msg, 75, "{\"t\":%.1f}", temp);
                  if (_mqttHandler != NULL)
                  {
                    _mqttHandler -> publish(_mqttTopic.c_str(), _msg);

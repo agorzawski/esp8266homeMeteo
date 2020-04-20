@@ -63,7 +63,7 @@ class I2cDataCollector : public Task
 
                           if ((millis() - _millisOnLastPublish) > DEFUALT_MQTT_PUBLISH_TIME)
                           {
-                            snprintf (_msg, MAX_MQTT_MESSAGE_LEMGTH, "{\"t\":%.2f, \"p\": %.1f}", T, tempPressure);
+                            snprintf (_msg, MAX_MQTT_MESSAGE_LEMGTH, "{\"t\":%.1f, \"p\": %.1f}", T, tempPressure);
                             if (_mqttHandler != NULL)
                             {
                               _mqttHandler -> publish(_mqttTopic.c_str(), _msg);

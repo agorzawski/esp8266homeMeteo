@@ -26,7 +26,7 @@ class TimerOnChannel
       _mqttTopic = maintopic + "/get";
       logPrintfX(F("[ToC]"), " Publishing for (%s)", _mqttTopic.c_str());
 
-      _mqttTopicSub = maintopic + "/get";
+      _mqttTopicSub = maintopic + "/set";
       logPrintfX(F("[ToC]"), " Subscribing for (%s)", _mqttTopicSub.c_str());
 
       if (_mqttHandler -> isConnected())

@@ -19,6 +19,8 @@
 
 #define DEFAULT_MQTT_PORT 1883
 
+#define MAX_MQTT_MESSAGE_LEMGTH 75
+
 using namespace Tasks;
 class MqttHandler : public Task
 {
@@ -60,12 +62,12 @@ class MqttHandler : public Task
 
         long now = millis();
 
-        if (now - lastMsg > DEFAULT_WAITING_MS && _mainState == States::WAITING)
+        if (now - _lastMsg > DEFAULT_WAITING_MS && _mainState == States::WAITING)
         {
           updateState(States::IDLE);
         }
 
-        lastMsg = now;
+        _lastMsg = now;
       }
 
       void reconnectMqttServer() {
@@ -96,7 +98,8 @@ class MqttHandler : public Task
           {
             logPrintf("[MQTT] Connected");
             updateState(States::CONNECTED);
-            _client -> publish(_statusTopic.c_str(), "connected");
+            snprintf (_msg, MAX_MQTT_MESSAGE_LEMGTH, "{\"ip\":%s, \"status\": connected}", _mqtt_server.c_str() );
+            _client -> publish(_statusTopic.c_str(), _msg);
             _client -> loop();
           }
           else
@@ -152,10 +155,8 @@ private:
   Callback _callback = nullptr;
   String _clientId = "";
   States _mainState = States::IDLE;
-  long lastMsg = 0;
-  char msg[50];
-  int value = 0;
-
+  long _lastMsg = 0;
+  char _msg[MAX_MQTT_MESSAGE_LEMGTH];
   String _topTopic = "home";
   String _statusTopic = "status";
 
@@ -170,7 +171,7 @@ private:
    Serial.print("Message arrived [");
    Serial.print(topic);
    Serial.print("] ");
-   for (int i=0;i<length;i++) {
+   for (unsigned int i=0;i<length;i++) {
      Serial.print((char)payload[i]);
    }
    Serial.println();

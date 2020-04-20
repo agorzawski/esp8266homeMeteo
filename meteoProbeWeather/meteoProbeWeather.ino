@@ -82,7 +82,6 @@ LedBlinker ledBlinker;
 
 TimerOnChannel channel1(PIN_RELAY_1, "OnBoard Relay");
 //TimerOnChannel channel2(PIN_RELAY_2, "OnBoard LED");
-// TimerOnChannel channel3(PIN_SPARE_1, "ExternalRelay1");
 
 void setup()
 {
@@ -107,11 +106,11 @@ void setup()
 
   // // // outside wold communication!
   String boardTopic = topTopic + "/" + boardSysName;
-  tempPressureCollector.setMqttHandler(mqttHandler, boardTopic);
-
   mqttHandler.setBoardStatusTopic(boardTopic);
+
+  tempPressureCollector.setMqttHandler(mqttHandler, boardTopic);
   channel1.setMqttHandler(mqttHandler, boardTopic + "/relay1");
-  tempCollector.setMqttHandler(mqttHandler, boardTopic + "/onBoard");
+  tempCollector.setMqttHandler(mqttHandler, boardTopic + "/status/boardSensors");
 
   /* #############
    TASKS
@@ -148,15 +147,18 @@ void connectionMqttStateChanged(MqttHandler::States state){
     case MqttHandler::States::CONNECTED:
     {
       displayTask.setMqttStatus("CONN");
+      String tmp = topTopic+"/"+boardSysName+"/status/network";
+      char _msg[50];
+      snprintf (_msg, 50, "{\"ip\":%s, \"essid\": %s}", WiFi.localIP().toString().c_str(), WiFi.SSID().c_str());
+      mqttHandler.publish( tmp.c_str(), _msg);
+
       channel1.setOn();
-      //channel3.setOn();
       break;
     }
     case MqttHandler::States::WAITING:
     {
       displayTask.setMqttStatus("WAIT");
       channel1.setOff();
-      //channel3.setOff();
       break;
     }
   }

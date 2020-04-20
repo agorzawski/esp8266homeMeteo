@@ -52,7 +52,7 @@ class LedBlinker: public Task
 
 // ###############################
 
-const static String firmwareVersion = "0.2.1";
+const static String firmwareVersion = "0.2.2";
 const static String boardName = "SondaX";
 const static String boardSysName = "sensorX";
 const static String topTopic = "home";
@@ -99,7 +99,7 @@ void setup()
   tempCollector.registerBuffersData(dataBufferManager);
   /* data consumers */
   webServerTask.registerBuffersData(dataBufferManager);
-
+  webServerTask.setFirmwareVersion(firmwareVersion);
   displayTask.registerBuffersData(dataBufferManager);
   displayTask.setDeviceName(boardName);
   displayTask.setFirmwareVersion(firmwareVersion);
@@ -147,9 +147,9 @@ void connectionMqttStateChanged(MqttHandler::States state){
     case MqttHandler::States::CONNECTED:
     {
       displayTask.setMqttStatus("CONN");
-      String tmp = topTopic+"/"+boardSysName+"/status/network";
+      String tmp = topTopic+"/"+boardSysName+"/status/system";
       char _msg[50];
-      snprintf (_msg, 50, "{\"ip\":%s, \"essid\": %s}", WiFi.localIP().toString().c_str(), WiFi.SSID().c_str());
+      snprintf (_msg, 50, "{\"ip\":%s, \"essid\": %s, \"firmware\": %s}", WiFi.localIP().toString().c_str(), WiFi.SSID().c_str(), firmwareVersion.c_str());
       mqttHandler.publish( tmp.c_str(), _msg);
 
       channel1.setOn();

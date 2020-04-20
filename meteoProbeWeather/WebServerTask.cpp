@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "WebServerTask.h"
 #include "ESP8266WebServer.h"
+#include "MacroStringReplace.h"
 #include "utils.h"
 
 ESP8266WebServer webServer(80);
@@ -8,6 +9,11 @@ ESP8266WebServer webServer(80);
 void WebServerTask::registerBuffersData(DataBufferManager& data)
 {
     _data = &data;
+}
+
+void WebServerTask::setFirmwareVersion(String ver)
+{
+  _ver = ver;
 }
 
 String WebServerTask::updateWebPage()
@@ -26,26 +32,29 @@ String WebServerTask::updateWebPage()
 
     webPage += "</head>\n<body>\n <div style=\"max-width: 650px;\"> \n";
     //content
-    webPage += "<h1>MeteoStation v1.0</h1>";
+    String title ="<h1>MeteoStation $VER</h1>";
+    title.replace("$VER", _ver);
+    webPage += title;
+    webPage += "<p><a href=\"/config\">CONFIG </a></p>";
 
-    DataBufferManager* data = getBuffer();
-    webPage += "<div id=\"tempPresure\" style=\"width:100%;height:500px;\"></div>";
+    //DataBufferManager* data = getBuffer();
+    //  webPage += "<div id=\"tempPresure\" style=\"width:100%;height:500px;\"></div>";
 
-    webPage += "(c) 2017 HomeMeteo by arek gorzawski";
+    webPage += "(c) 2017-2020 HomeMeteo by arek gorzawski";
     webPage += "</body>\n";
 
     // JS for the plot
-    webPage += "<script>TEMPPRESSURE=document.getElementById('tempPresure'); \n";
-    webPage += " var layout = {yaxis:{title:'[&deg;C]'}, yaxis2: { title:'[hPa]',overlaying:'y', side:'right'}}; \n";
-    String varData = "var data = [";
-    for (int id = 0; id < 2; id++)
-    {
-      varData += getChannelName(id) + ",";
-      webPage += getJavaScriptEntriesForAChannel(id, id);
-    }
-    varData += "];\n";
-    webPage += varData;
-    webPage += "Plotly.plot(TEMPPRESSURE, data, layout); </script>\n";
+    // webPage += "<script>TEMPPRESSURE=document.getElementById('tempPresure'); \n";
+    // webPage += " var layout = {yaxis:{title:'[&deg;C]'}, yaxis2: { title:'[hPa]',overlaying:'y', side:'right'}}; \n";
+    // String varData = "var data = [";
+    // for (int id = 0; id < 2; id++)
+    // {
+    //   varData += getChannelName(id) + ",";
+    //   webPage += getJavaScriptEntriesForAChannel(id, id);
+    // }
+    // varData += "];\n";
+    // webPage += varData;
+    // webPage += "Plotly.plot(TEMPPRESSURE, data, layout); </script>\n";
 
     webPage += "</html> \n";
     return webPage;
@@ -120,6 +129,69 @@ String WebServerTask::getJavaScriptEntriesForAChannel(uint32_t id, uint32_t axis
     return toReturn;
 }
 
+static const char configPage[] PROGMEM = R"_(
+  <html><head>
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
+  <title>$title$</title><style>
+    h2 {color: green;}
+    th {font-weight: bold; font-size: 130%;}
+    .l {text-align: right; font-style: italic;}
+    a {text-decoration: none;}
+  </style></head>
+  <body>
+  <a href="/">&lArr;	</a>
+   <form action="/config" method="POST">
+   <table>
+      <tr><th>Config</th><th width="50%"/><th/></tr>
+      <tr><td colspan="3"><textarea cols="60" rows="40" autofocus="true" name="content">$configFileContents$</textarea></td></tr>
+      <tr><td/><td/><td><input type="submit" value="Save"></td></tr>
+    </table>
+    </form>
+  </body>
+</html>
+)_";
+
+FlashStream configPageFS(configPage);
+
+void WebServerTask::handleConfig()
+{
+	//if (!handleAuth(webServer))
+	//	return;
+
+	String content;
+
+	if (webServer.method() == HTTP_GET)
+	{
+		//read config from the file
+		SPIFFS.begin();
+		auto file = SPIFFS.open("/config.txt", "r");
+		if (!file)
+			content = F("# The file is empty, please create a new one!");
+		else
+		{
+			content = file.readString();
+			file.close();
+		}
+		SPIFFS.end();
+	}
+	else
+	{
+		//POST
+		//load content from variable
+		content = webServer.arg(F("content"));
+		SPIFFS.begin();
+		auto file = SPIFFS.open("/config.txt", "w+");
+		file.print(content);
+		file.close();
+		SPIFFS.end();
+		readConfigFromFS();
+	}
+
+	StringStream ss(2048);
+	macroStringReplace(configPageFS, constString(content), ss);
+	webServer.send(200, "text/html", ss.buffer);
+}
+
 String WebServerTask::getChannelName(uint32_t id)
 {
   return "data"+String(id);
@@ -153,7 +225,7 @@ void WebServerTask::run()
     webServer.on("/", [this](){
       webServer.send(200, "text/html", updateWebPage() );
     });
-
+		webServer.on("/config", [this]{handleConfig();});
     webServer.begin();
 
     logPrintf("WebServerTask - ready!");

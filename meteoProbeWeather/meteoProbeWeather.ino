@@ -50,6 +50,14 @@ class LedBlinker: public Task
     bool s = false;
 };
 
+// ###############################
+
+const static String firmwareVersion = "0.2.1";
+const static String boardName = "SondaX";
+const static String boardSysName = "sensorX";
+const static String topTopic = "home";
+
+// ################################
 //Data
 //FIXME move data containers to some other place
 BufferedMeteoData data;
@@ -65,7 +73,7 @@ OneWireDataCollector tempCollector(PIN_ONE_WIRE);
 void connectionStateChanged(WifiConnector::States state);
 WifiConnector wifiConnector(connectionStateChanged);
 void connectionMqttStateChanged(MqttHandler::States state);
-MqttHandler mqttHandler(connectionMqttStateChanged);
+MqttHandler mqttHandler(connectionMqttStateChanged, topTopic);
 WebServerTask webServerTask;
 
 // Hardware
@@ -73,8 +81,8 @@ DisplayTask displayTask(PIN_SDA, PIN_SCL);
 LedBlinker ledBlinker;
 
 TimerOnChannel channel1(PIN_RELAY_1, "OnBoard Relay");
-TimerOnChannel channel2(PIN_RELAY_2, "OnBoard LED");
-TimerOnChannel channel3(PIN_SPARE_1, "ExternalRelay1");
+//TimerOnChannel channel2(PIN_RELAY_2, "OnBoard LED");
+// TimerOnChannel channel3(PIN_SPARE_1, "ExternalRelay1");
 
 void setup()
 {
@@ -83,12 +91,7 @@ void setup()
   checkFileSystem();
 	readConfigFromFS();
 
-  //TODO in to the file
-  char* firmwareVersion = "0.2.0";
-  char* boardName = "Sonda2";
-  char* boardSysName = "sensor2";
-
-  logPrintf("[%s/%s] INITIALIZATION STARTED", boardName, boardSysName);
+  logPrintf("[%s/%s] INITIALIZATION STARTED", boardName.c_str(), boardSysName.c_str());
   String macAddress = WiFi.macAddress();
   logPrintf("[MAC Address] %s", macAddress.c_str());
 
@@ -97,15 +100,18 @@ void setup()
   tempCollector.registerBuffersData(dataBufferManager);
   /* data consumers */
   webServerTask.registerBuffersData(dataBufferManager);
+
   displayTask.registerBuffersData(dataBufferManager);
   displayTask.setDeviceName(boardName);
   displayTask.setFirmwareVersion(firmwareVersion);
 
   // // // outside wold communication!
-  //TOD build these strings from boardSysName
-  channel1.setMqttHandler(mqttHandler, "home/sensor2/relay1"); // on board relay
-  tempPressureCollector.setMqttHandler(mqttHandler, "home/sensor2");
-  tempCollector.setMqttHandler(mqttHandler,"home/sensor2/onewire");
+  String boardTopic = topTopic + "/" + boardSysName;
+  tempPressureCollector.setMqttHandler(mqttHandler, boardTopic);
+
+  mqttHandler.setBoardStatusTopic(boardTopic);
+  channel1.setMqttHandler(mqttHandler, boardTopic + "/relay1");
+  tempCollector.setMqttHandler(mqttHandler, boardTopic + "/onBoard");
 
   /* #############
    TASKS
@@ -122,7 +128,7 @@ void setup()
   addTask(&mqttHandler);
   mqttHandler.suspend();
 
-  logPrintf("[%s/%s] INITIALIZATION DONE! ", boardName, boardSysName);
+  logPrintf("[%s/%s] INITIALIZATION DONE! ", boardName.c_str(), boardSysName.c_str());
   setupTasks();
 }
 
@@ -142,15 +148,15 @@ void connectionMqttStateChanged(MqttHandler::States state){
     case MqttHandler::States::CONNECTED:
     {
       displayTask.setMqttStatus("CONN");
-      channel2.setOn();
-      channel3.setOn();
+      channel1.setOn();
+      //channel3.setOn();
       break;
     }
     case MqttHandler::States::WAITING:
     {
       displayTask.setMqttStatus("WAIT");
-      channel2.setOff();
-      channel3.setOff();
+      channel1.setOff();
+      //channel3.setOff();
       break;
     }
   }

@@ -6,13 +6,13 @@
 #include "Wire.h"
 #include "MeteoUtils.h"
 #include "MqttHandler.h"
-
 #include "task.hpp"
 
 #define DELAY_BETWEEN_REDOUTS_MS 20
 #define DEFAULT_ALT_M 406
 #define DEFUALT_MQTT_PUBLISH_TIME 30000
 #define DEFUALT_PUBLISH_TIME 1000
+#define MAX_MQTT_MESSAGE_LEMGTH 75
 
 using namespace Tasks;
 
@@ -26,10 +26,10 @@ class I2cDataCollector : public Task
         _temperaturePressure.setOversampling(4);
     }
 
-    void setMqttHandler(MqttHandler& mqttHandler, char* topic){
+    void setMqttHandler(MqttHandler& mqttHandler, String topic){
       _mqttHandler = &mqttHandler;
       _mqttTopic = topic;
-      logPrintf("Registred for meteo params on %s", topic);
+      logPrintf("[i2c coll] Registred for meteo params on (%s)", _mqttTopic.c_str());
     }
 
     void registerBuffersData(DataBufferManager& data)
@@ -63,10 +63,10 @@ class I2cDataCollector : public Task
 
                           if ((millis() - _millisOnLastPublish) > DEFUALT_MQTT_PUBLISH_TIME)
                           {
-                            snprintf (_msg, 75, "{\"t\":%.2f, \"p\": %.1f}", T, tempPressure);
+                            snprintf (_msg, MAX_MQTT_MESSAGE_LEMGTH, "{\"t\":%.2f, \"p\": %.1f}", T, tempPressure);
                             if (_mqttHandler != NULL)
                             {
-                              _mqttHandler -> publish(_mqttTopic, _msg);
+                              _mqttHandler -> publish(_mqttTopic.c_str(), _msg);
                             }
                             _millisOnLastPublish = millis();
                           }
@@ -96,6 +96,7 @@ class I2cDataCollector : public Task
         long _millisOnLastPublish = 0;
         MqttHandler* _mqttHandler = NULL;
         float defualtAltitudeForReference = DEFAULT_ALT_M;
-        char* _mqttTopic = NULL;
-        char _msg[75];
+
+        String _mqttTopic;
+        char _msg[MAX_MQTT_MESSAGE_LEMGTH];
 };

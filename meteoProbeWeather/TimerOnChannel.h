@@ -6,6 +6,7 @@
 #define TimerOnChannel_h
 #include "Arduino.h"
 #include "MqttHandler.h"
+#include "utils.h"
 
 class TimerOnChannel
 {
@@ -18,22 +19,29 @@ class TimerOnChannel
        _label = label;
     }
 
-    void setMqttHandler(MqttHandler &mqttHandler, char* topic)
+    void setMqttHandler(MqttHandler &mqttHandler, String maintopic)
     {
       _mqttHandler = &mqttHandler;
-      _mqttTopic = topic;
-      _mqttTopicSub = toCharArray("%s/%s", topic, "set");
-      logPrintf("[%s] Publishing for %s", _label.c_str(), _mqttTopic);
-      logPrintf("[%s] Listening for %s", _label.c_str(), _mqttTopicSub);
+
+      _mqttTopic = maintopic + "/get";
+      logPrintfX(F("[ToC]"), " Publishing for (%s)", _mqttTopic.c_str());
+
+      _mqttTopicSub = maintopic + "/get";
+      logPrintfX(F("[ToC]"), " Subscribing for (%s)", _mqttTopicSub.c_str());
+
+      if (_mqttHandler -> isConnected())
+      {
+        // _mqttHandler -> subscribe(_mqttTopicSub);
+      }
     }
 
     void subscribe()
     {
-      Serial.print("Subscribing for -> "); Serial.println(_mqttTopicSub);
-      if (_mqttHandler -> isConnected())
-      {
-        //_mqttHandler -> subscribe(_mqttTopicSub);
-      }
+      // Serial.print("Subscribing for -> "); Serial.println(_mqttTopicSub);
+      // if (_mqttHandler -> isConnected())
+      // {
+      //   _mqttHandler -> subscribe(_mqttTopicSub);
+      // }
     }
 
     void setOn()
@@ -42,7 +50,7 @@ class TimerOnChannel
       digitalWrite(_pin, HIGH);
       if (_mqttHandler != NULL)
       {
-        _mqttHandler -> publish(_mqttTopic, "ON");
+        _mqttHandler -> publish(_mqttTopic.c_str(), "ON");
       }
       _isOn = true;
     }
@@ -53,7 +61,7 @@ class TimerOnChannel
       digitalWrite(_pin, LOW);
       if (_mqttHandler != NULL)
       {
-        _mqttHandler -> publish(_mqttTopic, "OFF");
+        _mqttHandler -> publish(_mqttTopic.c_str(), "OFF");
       }
       _isOn = false;
     }
@@ -163,16 +171,27 @@ class TimerOnChannel
     String _label = "Lights";
     boolean _manual = false;
     MqttHandler* _mqttHandler = NULL;
-    char* _mqttTopic = NULL;
-    char* _mqttTopicSub = NULL;
+    String _mqttTopic;
+    String _mqttTopicSub;
     boolean _isOn = false;
 
-
-
-    static int getNbOfHours(long timeInMillis)
+   static int getNbOfHours(long timeInMillis)
     {
       return ((timeInMillis  % 86400L) / 3600) + 1; //TODO GMT+1 (GVA)
     }
+
+    // void callbackMqtt(char* topic, byte* payload, unsigned int length)
+    // {
+    //  Serial.print("[chanell client]: Message arrived [");
+    //  Serial.print(topic);
+    //  Serial.print("] ");
+    //  for (int i=0;i<length;i++) {
+    //    Serial.print((char)payload[i]);
+    //  }
+    //  Serial.println();
+    // }
+
+
 };
 
 #endif

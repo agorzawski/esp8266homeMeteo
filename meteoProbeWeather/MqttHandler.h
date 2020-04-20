@@ -10,6 +10,7 @@
 #include <SPI.h>
 #include "ESP8266WiFi.h"
 #include <DataStore.h>
+#include "utils.h"
 
 #define DEFAULT_STATE_PUBLISH_MS 30000
 #define DEFAULT_WAITING_MS 60000
@@ -32,10 +33,17 @@ class MqttHandler : public Task
      };
      using Callback = void (*)(States state); //main function callback
 
-     MqttHandler(Callback callback):
+     MqttHandler(Callback callback, String topTopic):
             _callback(callback)
      {
-       _client = new PubSubClient(_espClient);
+        _client = new PubSubClient(_espClient);
+        _topTopic = topTopic;
+     }
+
+     void setBoardStatusTopic(String boardTopTopic)
+     {
+        _statusTopic = boardTopTopic + "/status/mqtt";
+        logPrintf("[MQTT] Established status topic (%s)", _statusTopic.c_str());
      }
 
      virtual void run()
@@ -65,11 +73,15 @@ class MqttHandler : public Task
         auto _mqtt_server = DataStore::value(F("mqttServer"));
         auto _mqtt_user = DataStore::value(F("mqttUser"));
         auto _mqtt_pass = DataStore::value(F("mqttPassword"));
-        logPrintfX(F("[MQTT]"), "Connecting (%s, %s)", _mqtt_server.c_str(), _mqtt_user.c_str());
+        logPrintf("[MQTT] Connecting (%s, %s)", _mqtt_server.c_str(), _mqtt_user.c_str());
         _client -> setServer(_mqtt_server.c_str(), DEFAULT_MQTT_PORT);
-        _client -> unsubscribe("home/");
-        _client -> subscribe("home/");
+        //_client -> unsubscribe(_topTopic);
+        //_client -> subscribe(_topTopic);
         //_client -> setCallback(callbackMqtt);
+        _client -> setCallback([this](const char* topic, byte* payload, unsigned int length)
+        {
+            callbackMqtt(topic, payload, length);
+        });
 
         int index = 0;
         while (!_client->connected()) {
@@ -84,7 +96,8 @@ class MqttHandler : public Task
           {
             logPrintf("[MQTT] Connected");
             updateState(States::CONNECTED);
-            _client -> publish("home/status", "connected");
+            _client -> publish(_statusTopic.c_str(), "connected");
+            _client -> loop();
           }
           else
           {
@@ -115,8 +128,10 @@ class MqttHandler : public Task
       }
 
       void publish(const char *topic, const char *payload){
+        logPrintf("[MQTT] received: topic (%s) -> (%s)", topic, payload);
         if (_mainState == States::CONNECTED)
         {
+          logPrintf("[MQTT] published on topic (%s) value (%s)", topic, payload);
           _client -> publish(topic, payload);
         }
       }
@@ -125,7 +140,7 @@ class MqttHandler : public Task
         if (_mainState == States::CONNECTED)
         {
           _client -> subscribe(topic);
-          Serial.print("subscribed -> "); Serial.println(topic);
+          Serial.print("[MQTT] subscribed -> "); Serial.println(topic);
         }
       }
 
@@ -141,13 +156,16 @@ private:
   char msg[50];
   int value = 0;
 
+  String _topTopic = "home";
+  String _statusTopic = "status";
+
   void updateState(States state){
     _mainState = state;
     delay(DEFAULT_STATE_UPDATE_DELAY);
     _callback(state);
   }
 
-  void callbackMqtt(char* topic, byte* payload, unsigned int length)
+  void callbackMqtt(const char* topic, byte* payload, unsigned int length)
   {
    Serial.print("Message arrived [");
    Serial.print(topic);

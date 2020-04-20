@@ -74,14 +74,14 @@ class DisplayTask : public Task
         _dataBufferManager = &dataBufferManager;
     }
 
-    void setDeviceName(char* name)
+    void setDeviceName(String name)
     {
       _name = name;
       _millisOnLastCheck = millis();
 
     }
 
-    void setFirmwareVersion(char* ver){
+    void setFirmwareVersion(String ver){
         _ver = ver;
     }
 
@@ -160,8 +160,8 @@ class DisplayTask : public Task
     String _ip = "0.0.0.0";
     String _ssid = "'Set me up' IP!";
     String _mqttStatus = "SET-UP";
-    const char* _name = "name-not-set";
-    const char* _ver = "ver-not-set";
+    String _name = "name-not-set";
+    String _ver = "ver-not-set";
 
     void updateHeader()
     {
@@ -190,16 +190,16 @@ class DisplayTask : public Task
         display.setTextSize(1);
         display.print(unit);
 
-        if (abs(tendence) - 0.015 > 0 )
-        {
-          display.setCursor(98,15);
-          display.setTextSize(1);
-          display.setTextColor(WHITE);
-          display.print(tendence, decimalDigit);
-          display.setCursor(98,34);
-          display.print(_dataBufferManager -> getActualTendenceLabel());
-          drawArrow(tendence, 24);
-        }
+        // if (abs(tendence) - 0.015 > 0 )
+        // {
+        //   display.setCursor(98,15);
+        //   display.setTextSize(1);
+        //   display.setTextColor(WHITE);
+        //   display.print(tendence, decimalDigit);
+        //   display.setCursor(98,34);
+        //   display.print(_dataBufferManager -> getActualTendenceLabel());
+        //   drawArrow(tendence, 24);
+        // }
     }
 
     void drawArrow(float tendence, int arbitY)

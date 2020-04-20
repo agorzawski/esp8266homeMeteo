@@ -26,10 +26,11 @@ class OneWireDataCollector : public Task
        READY
      };
 
-      OneWireDataCollector(int bus)
-      {
-         OneWire _oneWire(bus);
-         _sensors = DallasTemperature(&_oneWire);
+      OneWireDataCollector(int bus):
+        _oneWire(bus),
+        _sensors(&_oneWire)
+      {        
+         //_sensors = DallasTemperature(&_oneWire);
          _sensors.begin();
          _sensors.setWaitForConversion(false);
          _sensors.requestTemperatures();
@@ -46,9 +47,10 @@ class OneWireDataCollector : public Task
           }
       }
 
-      void setMqttHandler(MqttHandler& mqttHandler, char* topic){
+      void setMqttHandler(MqttHandler& mqttHandler, String topic){
         _mqttHandler = &mqttHandler;
         _mqttTopic = topic;
+        logPrintf("[OneWire] Registred for meteo params on (%s)", _mqttTopic.c_str());
       }
 
       virtual void run()
@@ -73,7 +75,7 @@ class OneWireDataCollector : public Task
                  snprintf (_msg, 75, "{\"t\":%.2f}", temp);
                  if (_mqttHandler != NULL)
                  {
-                   _mqttHandler -> publish(_mqttTopic, _msg);
+                   _mqttHandler -> publish(_mqttTopic.c_str(), _msg);
                  }
                  _millisOnLastPublish = millis();
                }
@@ -86,6 +88,7 @@ class OneWireDataCollector : public Task
       }
 
 private:
+    OneWire _oneWire;
     DallasTemperature _sensors;
     MqttHandler* _mqttHandler = NULL;
     DataBufferManager* _data = NULL;
@@ -93,6 +96,6 @@ private:
     uint32_t _bufferId[SENSORS_NB];
     long _millisOnLastCheck = 0;
     long _millisOnLastPublish = 0;
-    char* _mqttTopic = "home/test";
+    String _mqttTopic = "home/test";
     char _msg[75];
 };
